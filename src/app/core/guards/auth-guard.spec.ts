@@ -1,5 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { CanActivateFn, provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
+import { User, onAuthStateChanged } from 'firebase/auth';
+import { AuthService } from '../../auth/auth';
 import { FIREBASE_AUTH } from '../tokens/firebase';
 import { authGuard } from './auth-guard';
 
@@ -11,20 +19,75 @@ vi.mock('firebase/auth', () => ({
   updateProfile: vi.fn(),
 }));
 
+const route = {} as ActivatedRouteSnapshot;
+const state = {} as RouterStateSnapshot;
+
 describe('authGuard', () => {
-  const executeGuard: CanActivateFn = (...guardParameters) =>
-    TestBed.runInInjectionContext(() => authGuard(...guardParameters));
+  let router: Router;
+
+  /** Simula lo que Firebase notifica al restaurar (o no) la sesión. */
+  function emitAuthState(user: User | null): void {
+    const [, callback] = vi.mocked(onAuthStateChanged).mock.calls[0];
+    (callback as (user: User | null) => void)(user);
+  }
+
+  function executeGuard(): Promise<boolean | UrlTree> {
+    return TestBed.runInInjectionContext(() => authGuard(route, state)) as Promise<
+      boolean | UrlTree
+    >;
+  }
+
+  /** Vacía la cola de microtareas para ver si el guard ya decidió. */
+  function flush(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0));
+  }
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
         { provide: FIREBASE_AUTH, useValue: {} as unknown as import('firebase/auth').Auth },
       ],
     });
+
+    router = TestBed.inject(Router);
+    TestBed.inject(AuthService); // registra el callback de onAuthStateChanged
   });
 
   it('should be created', () => {
-    expect(executeGuard).toBeTruthy();
+    expect(authGuard).toBeTruthy();
+  });
+
+  it('deja pasar cuando hay sesión', async () => {
+    emitAuthState({ uid: 'user-1' } as User);
+
+    await expect(executeGuard()).resolves.toBe(true);
+  });
+
+  it('redirige a /login cuando no hay sesión', async () => {
+    emitAuthState(null);
+
+    const result = await executeGuard();
+
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(router.serializeUrl(result as UrlTree)).toBe('/login');
+  });
+
+  it('espera a que la sesión se restaure antes de decidir', async () => {
+    // Estado inicial al recargar la página: Firebase todavía no notificó nada.
+    let decided = false;
+    const pending = executeGuard();
+    void pending.then(() => {
+      decided = true;
+    });
+
+    await flush();
+    expect(decided).toBe(false); // sin esto vendría el parpadeo al login
+
+    emitAuthState({ uid: 'user-1' } as User);
+
+    await expect(pending).resolves.toBe(true);
   });
 });
