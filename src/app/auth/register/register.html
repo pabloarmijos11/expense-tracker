@@ -1,0 +1,73 @@
+<div class="flex min-h-[calc(100vh-56px)] items-center justify-center bg-gray-50 px-4">
+  <form
+    class="w-full max-w-sm space-y-4 rounded-lg bg-white p-6 shadow"
+    (submit)="onSubmit(); $event.preventDefault()"
+  >
+    <h1 class="text-2xl font-bold text-blue-600">Crear cuenta</h1>
+
+    @if (authService.error(); as errorMessage) {
+      <p class="rounded bg-red-50 p-2 text-sm text-red-700">{{ errorMessage }}</p>
+    }
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Nombre</span>
+      <input
+        type="text"
+        [formField]="registerForm.displayName"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (registerForm.displayName().touched() && registerForm.displayName().errors().length) {
+        <span class="text-sm text-red-600">{{ registerForm.displayName().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Correo</span>
+      <input
+        type="email"
+        [formField]="registerForm.email"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (registerForm.email().touched() && registerForm.email().errors().length) {
+        <span class="text-sm text-red-600">{{ registerForm.email().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Contraseña</span>
+      <input
+        type="password"
+        [formField]="registerForm.password"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (registerForm.password().touched() && registerForm.password().errors().length) {
+        <span class="text-sm text-red-600">{{ registerForm.password().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Confirmar contraseña</span>
+      <input
+        type="password"
+        [formField]="registerForm.confirmPassword"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (registerForm.confirmPassword().touched() && registerForm.confirmPassword().errors().length) {
+        <span class="text-sm text-red-600">{{ registerForm.confirmPassword().errors()[0].message }}</span>
+      }
+    </label>
+
+    <button
+      type="submit"
+      [disabled]="registerForm().invalid() || submitting()"
+      class="w-full rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+    >
+      {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
+    </button>
+
+    <p class="text-center text-sm text-gray-600">
+      ¿Ya tienes cuenta?
+      <a routerLink="/login" class="text-blue-600 underline">Inicia sesión</a>
+    </p>
+  </form>
+</div>

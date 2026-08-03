@@ -1,0 +1,62 @@
+<div class="mx-auto max-w-md p-6">
+  <h1 class="text-2xl font-bold text-blue-600">Categorías</h1>
+
+  @if (categoryService.error(); as errorMessage) {
+    <p class="mt-4 rounded bg-red-50 p-2 text-sm text-red-700">{{ errorMessage }}</p>
+  }
+
+  <form class="mt-4 flex items-end gap-3" (submit)="onSubmit(); $event.preventDefault()">
+    <label class="flex-1 text-sm">
+      <span class="block text-gray-700">Nombre</span>
+      <input
+        type="text"
+        [formField]="categoryForm.name"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (categoryForm.name().touched() && categoryForm.name().errors().length) {
+        <span class="text-sm text-red-600">{{ categoryForm.name().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="text-sm">
+      <span class="block text-gray-700">Color</span>
+      <input
+        type="color"
+        [formField]="categoryForm.color"
+        class="mt-1 h-10 w-14 rounded border border-gray-300"
+      />
+    </label>
+
+    <button
+      type="submit"
+      [disabled]="categoryForm().invalid() || submitting()"
+      class="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+    >
+      Agregar
+    </button>
+  </form>
+
+  @if (categoryService.loading()) {
+    <p class="mt-4 text-sm text-gray-500">Cargando…</p>
+  } @else if (categoryService.categories().length === 0) {
+    <p class="mt-4 text-sm text-gray-500">Todavía no tienes categorías.</p>
+  } @else {
+    <ul class="mt-4 divide-y divide-gray-200 rounded border border-gray-200 bg-white">
+      @for (categoryOption of categoryService.categories(); track categoryOption.id) {
+        <li class="flex items-center justify-between px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="h-4 w-4 rounded-full" [style.background-color]="categoryOption.color"></span>
+            <span class="text-gray-900">{{ categoryOption.name }}</span>
+          </div>
+          <button
+            type="button"
+            (click)="onDelete(categoryOption.id)"
+            class="text-sm text-red-600 underline"
+          >
+            Eliminar
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

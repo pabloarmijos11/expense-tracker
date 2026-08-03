@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ===============================================================
+// Modelo de datos asumido
+// ===============================================================
+//
+// Colección: expenses
+//   - ownerId: string (uid del dueño, inmutable tras la creación)
+//   - description: string (1-200 caracteres)
+//   - total: number (> 0)
+//   - categoryId: string
+//   - date: string ('YYYY-MM-DD')
+//   - lines: list de mapas { label: string, amount: number } (validación de
+//     forma superficial; el detalle de cada línea se confía al cliente)
+//   - createdAt: number (epoch millis, inmutable)
+//
+// Colección: categories
+//   - ownerId: string (uid del dueño, inmutable tras la creación)
+//   - name: string (1-50 caracteres)
+//   - color: string
+//
+// Todo el acceso requiere sesión y que el documento pertenezca al usuario
+// autenticado (ownerId == request.auth.uid). El campo ownerId nunca puede
+// cambiar tras la creación.
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.ownerId == request.auth.uid;
+    }
+
+    function ownerUnchanged() {
+      return request.resource.data.ownerId == resource.data.ownerId;
+    }
+
+    function isValidExpense(data) {
+      return data.keys().hasOnly(
+               ['ownerId', 'description', 'total', 'categoryId', 'date', 'lines', 'createdAt']
+             ) &&
+             data.ownerId is string &&
+             data.description is string && data.description.size() > 0 && data.description.size() < 200 &&
+             data.total is number && data.total > 0 &&
+             data.categoryId is string && data.categoryId.size() > 0 &&
+             data.date is string &&
+             data.lines is list && data.lines.size() < 50 &&
+             data.createdAt is number;
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasOnly(['ownerId', 'name', 'color']) &&
+             data.ownerId is string &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+             data.color is string;
+    }
+
+    match /expenses/{expenseId} {
+      allow read:   if isOwner(resource.data);
+      allow create: if isSignedIn() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       isValidExpense(request.resource.data);
+      allow update: if isOwner(resource.data) &&
+                       isValidExpense(request.resource.data) &&
+                       ownerUnchanged();
+      allow delete: if isOwner(resource.data);
+    }
+
+    match /categories/{categoryId} {
+      allow read:   if isOwner(resource.data);
+      allow create: if isSignedIn() &&
+                       request.resource.data.ownerId == request.auth.uid &&
+                       isValidCategory(request.resource.data);
+      allow update: if isOwner(resource.data) &&
+                       isValidCategory(request.resource.data) &&
+                       ownerUnchanged();
+      allow delete: if isOwner(resource.data);
+    }
+  }
+}

@@ -1,0 +1,22 @@
+<nav class="flex items-center justify-between bg-white px-6 py-3 shadow">
+  <a routerLink="/expenses" class="text-lg font-bold text-blue-600">Gestor de gastos</a>
+
+  @if (authService.currentUser(); as user) {
+    <div class="flex items-center gap-4">
+      <a routerLink="/categories" class="text-sm text-blue-600 underline">Categorías</a>
+      <span class="text-sm text-gray-600">{{ user.email }}</span>
+      <button
+        type="button"
+        (click)="onLogout()"
+        class="rounded bg-gray-100 px-3 py-1 text-sm text-gray-700 hover:bg-gray-200"
+      >
+        Cerrar sesión
+      </button>
+    </div>
+  } @else {
+    <div class="flex items-center gap-4 text-sm">
+      <a routerLink="/login" class="text-blue-600 underline">Iniciar sesión</a>
+      <a routerLink="/register" class="text-blue-600 underline">Registrarse</a>
+    </div>
+  }
+</nav>

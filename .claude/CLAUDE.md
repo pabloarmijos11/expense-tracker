@@ -29,7 +29,10 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use `computed()` for derived state
 - Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
 - Prefer inline templates for small components
-- Prefer Reactive forms instead of Template-driven ones
+- Use **Signal Forms** (`@angular/forms/signals`) for all forms in this project — NOT classic
+  Reactive Forms (`FormGroup`/`FormControl`/`FormArray`/`FormBuilder`) and NOT template-driven
+  forms. See `~/.claude/skills/angular-developer/references/signal-forms.md` before writing any
+  form code; it documents required patterns and common pitfalls specific to this API.
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
 - When using external templates/styles, use paths relative to the component TS file.

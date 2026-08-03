@@ -1,0 +1,38 @@
+<div class="mx-auto max-w-md p-6">
+  <a routerLink="/expenses" class="text-sm text-blue-600 underline">← Volver</a>
+
+  <h1 class="mt-2 text-2xl font-bold text-gray-900">{{ expense().description }}</h1>
+  <p class="mt-1 text-3xl font-semibold text-blue-600">{{ expense().total }}</p>
+
+  <dl class="mt-4 space-y-2 text-sm">
+    <div class="flex justify-between">
+      <dt class="text-gray-500">Fecha</dt>
+      <dd class="text-gray-900">{{ expense().date }}</dd>
+    </div>
+    <div class="flex justify-between">
+      <dt class="text-gray-500">Categoría</dt>
+      <dd class="text-gray-900">{{ categoryName(expense().categoryId) }}</dd>
+    </div>
+  </dl>
+
+  @if (expense().lines.length > 0) {
+    <section class="mt-6">
+      <h2 class="text-sm font-medium text-gray-700">Desglose</h2>
+      <ul class="mt-2 divide-y divide-gray-200 rounded border border-gray-200 bg-white">
+        @for (line of expense().lines; track $index) {
+          <li class="flex justify-between px-3 py-2 text-sm">
+            <span class="text-gray-900">{{ line.label }}</span>
+            <span class="text-gray-700">{{ line.amount }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <a
+    [routerLink]="['/expenses', expense().id, 'edit']"
+    class="mt-6 inline-block rounded bg-blue-600 px-4 py-2 text-sm text-white"
+  >
+    Editar
+  </a>
+</div>

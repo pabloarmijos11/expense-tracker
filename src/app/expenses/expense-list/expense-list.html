@@ -1,0 +1,91 @@
+<div class="mx-auto max-w-2xl p-6">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-blue-600">Mis gastos</h1>
+    <a routerLink="/expenses/new" class="rounded bg-blue-600 px-4 py-2 text-sm text-white">
+      Nuevo gasto
+    </a>
+  </div>
+
+  @if (expenseService.error(); as errorMessage) {
+    <p class="mt-4 rounded bg-red-50 p-2 text-sm text-red-700">{{ errorMessage }}</p>
+  }
+
+  <div class="mt-4 flex flex-wrap items-end gap-3">
+    <label class="text-sm">
+      <span class="block text-gray-700">Categoría</span>
+      <select
+        class="mt-1 rounded border border-gray-300 px-2 py-1"
+        [value]="category() ?? ''"
+        (change)="updateFilter('category', $any($event.target).value)"
+      >
+        <option value="">Todas</option>
+        @for (categoryOption of categoryService.categories(); track categoryOption.id) {
+          <option [value]="categoryOption.id">{{ categoryOption.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="text-sm">
+      <span class="block text-gray-700">Mes</span>
+      <select
+        class="mt-1 rounded border border-gray-300 px-2 py-1"
+        [value]="month() ?? ''"
+        (change)="updateFilter('month', $any($event.target).value)"
+      >
+        <option value="">Todos</option>
+        @for (monthOption of availableMonths(); track monthOption) {
+          <option [value]="monthOption">{{ monthOption }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="text-sm">
+      <span class="block text-gray-700">Ordenar por</span>
+      <select
+        class="mt-1 rounded border border-gray-300 px-2 py-1"
+        [value]="sort() ?? 'date'"
+        (change)="updateFilter('sort', $any($event.target).value)"
+      >
+        <option value="date">Fecha</option>
+        <option value="total">Monto</option>
+      </select>
+    </label>
+  </div>
+
+  @if (expenseService.loading()) {
+    <p class="mt-4 text-sm text-gray-500">Cargando…</p>
+  } @else if (filteredExpenses().length === 0) {
+    <p class="mt-4 text-sm text-gray-500">No hay gastos que coincidan con los filtros.</p>
+  } @else {
+    <ul class="mt-4 divide-y divide-gray-200 rounded border border-gray-200 bg-white">
+      @for (expense of filteredExpenses(); track expense.id) {
+        <li class="flex items-center justify-between px-4 py-3">
+          <a [routerLink]="['/expenses', expense.id]" class="flex-1">
+            <p class="font-medium text-gray-900">{{ expense.description }}</p>
+            <p class="text-sm text-gray-500">
+              {{ expense.date }} · {{ categoryName(expense.categoryId) }}
+            </p>
+          </a>
+          <div class="flex items-center gap-3">
+            <span class="font-semibold text-gray-900">{{ expense.total }}</span>
+            <a
+              [routerLink]="['/expenses', expense.id, 'edit']"
+              class="text-sm text-blue-600 underline"
+            >
+              Editar
+            </a>
+            <button
+              type="button"
+              (click)="onDelete(expense.id)"
+              class="text-sm text-red-600 underline"
+            >
+              Eliminar
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+
+    <p class="mt-4 text-right font-semibold text-gray-900">Total: {{ total() }}</p>
+  }
+</div>

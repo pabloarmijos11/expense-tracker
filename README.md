@@ -1,59 +1,82 @@
-# ExpenseTracker
+# expense-tracker
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
+Proyecto de práctica: un gestor de gastos personales con Angular 21 y
+Firebase (Auth + Firestore). A diferencia de los dos proyectos anteriores
+(`prueba-landingpage`, `prueba-firestore`), este existe para practicar cuatro
+cosas que no se habían tocado todavía:
 
-## Development server
+- **Routing avanzado** — rutas anidadas, parámetros, query params, guards y
+  resolvers.
+- **Formularios** — con **Signal Forms** (`@angular/forms/signals`), la API
+  de formularios de Angular 21: arrays de campos dinámicos, validación
+  cruzada y validación asíncrona contra Firestore.
+- **Lazy loading** — partir el bundle por secciones.
+- **Autenticación** — Firebase Auth con email/contraseña, que habilita
+  guards reales y reglas de seguridad de Firestore cerradas por usuario
+  dueño (`ownerId`), a diferencia de `prueba-firestore` que las tiene
+  abiertas.
 
-To start a local development server, run:
+> Estado: en construcción, por fases. Fases 1-6 completadas (andamiaje,
+> Firebase, autenticación y guards, modelo de datos y reglas de seguridad,
+> routing avanzado, formulario con arrays y validación cruzada). Pendientes:
+> validación asíncrona, lazy loading y cierre. Ver el plan completo en
+> `C:\Users\ASUS\.claude\plans\listo-entonces-me-gustar-a-lively-stroustrup.md`.
+
+## Estructura de carpetas
+
+```
+src/app/
+├── core/            # guards, resolvers, tokens de inyección (Firestore/Auth), modelos
+├── auth/            # login, registro, AuthService
+├── expenses/        # lista, detalle, formulario, ExpenseService
+├── categories/      # gestión de categorías, CategoryService
+├── budgets/         # presupuestos mensuales — sección con lazy loading (pendiente)
+├── shared/          # layout, navbar, not-found
+├── app.routes.ts
+└── app.config.ts    # providers, incluida la inicialización de Firebase
+```
+
+## Estilos
+
+Tailwind CSS v4, sin `tailwind.config.js` (configuración vía `@theme` si
+hace falta). Mismo montaje que `prueba-firestore`.
+
+## Firebase
+
+Proyecto propio (`expense-tracker-8869b`), separado del de
+`prueba-firestore`, con Authentication (Email/Password) y Cloud Firestore
+habilitados. El `firebaseConfig` vive en `src/environments/`.
+
+Las reglas de seguridad están en `firestore.rules`, cerradas por dueño
+(`ownerId == request.auth.uid`). **Editar ese archivo no basta**: hay que
+publicarlas en la consola de Firebase para que rijan.
+
+Las consultas que combinan `where('ownerId')` con `orderBy(...)` requieren
+un índice compuesto por colección. Firestore los pide con un error
+`failed-precondition` que incluye el enlace para crearlos.
+
+## Desarrollo
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abre `http://localhost:4200/`. La app se recarga automáticamente al
+modificar el código fuente.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Tests
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+Corre con [Vitest](https://vitest.dev/), incluido por defecto en el CLI de
+Angular 21.
 
-For end-to-end (e2e) testing, run:
+## Build
 
 ```bash
-ng e2e
+ng build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Genera los artefactos de compilación en `dist/`.

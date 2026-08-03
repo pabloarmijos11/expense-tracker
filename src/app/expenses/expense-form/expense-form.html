@@ -1,0 +1,111 @@
+<div class="mx-auto max-w-md p-6">
+  <h1 class="text-2xl font-bold text-blue-600">
+    {{ isEditMode() ? 'Editar gasto' : 'Nuevo gasto' }}
+  </h1>
+
+  <form class="mt-4 space-y-4" (submit)="onSubmit(); $event.preventDefault()">
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Descripción</span>
+      <input
+        type="text"
+        [formField]="expenseForm.description"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (expenseForm.description().touched() && expenseForm.description().errors().length) {
+        <span class="text-sm text-red-600">{{ expenseForm.description().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Total</span>
+      <input
+        type="number"
+        step="0.01"
+        [formField]="expenseForm.total"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (expenseForm.total().touched() && expenseForm.total().errors().length) {
+        <span class="text-sm text-red-600">{{ expenseForm.total().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Categoría</span>
+      <select
+        [formField]="expenseForm.categoryId"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      >
+        <option value="">Elige una categoría</option>
+        @for (categoryOption of categoryService.categories(); track categoryOption.id) {
+          <option [value]="categoryOption.id">{{ categoryOption.name }}</option>
+        }
+      </select>
+      @if (expenseForm.categoryId().touched() && expenseForm.categoryId().errors().length) {
+        <span class="text-sm text-red-600">{{ expenseForm.categoryId().errors()[0].message }}</span>
+      }
+    </label>
+
+    <label class="block">
+      <span class="text-sm font-medium text-gray-700">Fecha</span>
+      <input
+        type="date"
+        [formField]="expenseForm.date"
+        class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
+      />
+      @if (expenseForm.date().touched() && expenseForm.date().errors().length) {
+        <span class="text-sm text-red-600">{{ expenseForm.date().errors()[0].message }}</span>
+      }
+    </label>
+
+    <div class="space-y-2">
+      <div class="flex items-center justify-between">
+        <span class="text-sm font-medium text-gray-700">Líneas del gasto (opcional)</span>
+        <button type="button" (click)="addLine()" class="text-sm text-blue-600 underline">
+          + Agregar línea
+        </button>
+      </div>
+
+      @for (line of expenseForm.lines; track $index; let i = $index) {
+        <div class="flex items-start gap-2">
+          <div class="flex-1">
+            <input
+              type="text"
+              placeholder="Etiqueta"
+              [formField]="line.label"
+              class="w-full rounded border border-gray-300 px-3 py-2"
+            />
+            @if (line.label().touched() && line.label().errors().length) {
+              <span class="text-sm text-red-600">{{ line.label().errors()[0].message }}</span>
+            }
+          </div>
+          <div class="w-28">
+            <input
+              type="number"
+              step="0.01"
+              placeholder="Monto"
+              [formField]="line.amount"
+              class="w-full rounded border border-gray-300 px-3 py-2"
+            />
+            @if (line.amount().touched() && line.amount().errors().length) {
+              <span class="text-sm text-red-600">{{ line.amount().errors()[0].message }}</span>
+            }
+          </div>
+          <button type="button" (click)="removeLine(i)" class="mt-2 text-sm text-red-600 underline">
+            Quitar
+          </button>
+        </div>
+      }
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button
+        type="submit"
+        [disabled]="expenseForm().invalid() || submitting()"
+        class="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
+      >
+        {{ submitting() ? 'Guardando…' : 'Guardar' }}
+      </button>
+      <a routerLink="/expenses" class="text-sm text-gray-600 underline">Cancelar</a>
+    </div>
+  </form>
+</div>

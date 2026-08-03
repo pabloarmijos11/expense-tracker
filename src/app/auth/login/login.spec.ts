@@ -1,7 +1,8 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { App } from './app';
-import { FIREBASE_AUTH } from './core/tokens/firebase';
+import { FIREBASE_AUTH } from '../../core/tokens/firebase';
+
+import { Login } from './login';
 
 vi.mock('firebase/auth', () => ({
   onAuthStateChanged: vi.fn(() => () => {}),
@@ -11,20 +12,25 @@ vi.mock('firebase/auth', () => ({
   updateProfile: vi.fn(),
 }));
 
-describe('App', () => {
+describe('Login', () => {
+  let component: Login;
+  let fixture: ComponentFixture<Login>;
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [Login],
       providers: [
         provideRouter([]),
         { provide: FIREBASE_AUTH, useValue: {} as unknown as import('firebase/auth').Auth },
       ],
     }).compileComponents();
+
+    fixture = TestBed.createComponent(Login);
+    component = fixture.componentInstance;
+    await fixture.whenStable();
   });
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+  it('should create', () => {
+    expect(component).toBeTruthy();
   });
 });
