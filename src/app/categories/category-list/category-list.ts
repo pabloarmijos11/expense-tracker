@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormField, form, required, submit } from '@angular/forms/signals';
+import { ChangeDetectionStrategy, Component, inject, resource, signal } from '@angular/core';
+import { FormField, debounce, form, required, submit, validateAsync } from '@angular/forms/signals';
 import { CategoryService } from '../category';
 
 @Component({
@@ -20,12 +20,29 @@ export class CategoryList {
 
   protected readonly categoryForm = form(this.model, (s) => {
     required(s.name, { message: 'El nombre es obligatorio' });
+
+    // Retrasa la sincronización con el modelo: sin esto, la validación
+    // asíncrona consultaría Firestore una vez por tecla.
+    debounce(s.name, 300);
+
+    validateAsync(s.name, {
+      params: ({ value }) => value().trim(),
+      factory: (name) =>
+        resource({
+          params: name,
+          loader: ({ params }) => this.categoryService.nameExists(params),
+        }),
+      onSuccess: (exists) =>
+        exists ? { kind: 'duplicate', message: 'Ya tienes una categoría con ese nombre' } : undefined,
+      onError: () => ({ kind: 'error', message: 'No se pudo verificar el nombre' }),
+    });
   });
 
   protected onSubmit(): void {
     submit(this.categoryForm, async () => {
       this.submitting.set(true);
-      await this.categoryService.addCategory(this.model());
+      const { name, color } = this.model();
+      await this.categoryService.addCategory({ name: name.trim(), color });
       this.model.set({ name: '', color: '#3b82f6' });
       this.submitting.set(false);
     });

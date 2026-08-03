@@ -5,6 +5,8 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -82,6 +84,37 @@ export class CategoryService {
     } catch (error) {
       this.reportError('No se pudo agregar la categoría', error);
     }
+  }
+
+  /**
+   * Consulta si el usuario ya tiene una categoría con ese nombre. Va a
+   * Firestore en vez de mirar el signal `categories` para que la comprobación
+   * sea real aunque el listener aún no haya llegado.
+   *
+   * La comparación es sensible a mayúsculas: Firestore no admite consultas
+   * case-insensitive, y guardar un campo `nameLower` obligaría a cambiar el
+   * `hasOnly` de las reglas y a republicarlas.
+   *
+   * Deja escapar el error a propósito: quien llama es el `validateAsync` del
+   * formulario, que lo traduce en su `onError` y lo muestra en el campo, no
+   * en el banner general.
+   */
+  async nameExists(name: string): Promise<boolean> {
+    const user = this.authService.currentUser();
+    const trimmedName = name.trim();
+    if (!user || !trimmedName) {
+      return false;
+    }
+
+    const duplicateQuery = query(
+      this.categoriesCollection,
+      where('ownerId', '==', user.uid),
+      where('name', '==', trimmedName),
+      limit(1),
+    );
+
+    const snapshot = await getDocs(duplicateQuery);
+    return !snapshot.empty;
   }
 
   async updateCategory(id: string, changes: Partial<Omit<NewCategory, 'ownerId'>>): Promise<void> {

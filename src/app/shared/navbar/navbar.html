@@ -4,6 +4,7 @@
   @if (authService.currentUser(); as user) {
     <div class="flex items-center gap-4">
       <a routerLink="/categories" class="text-sm text-blue-600 underline">Categorías</a>
+      <a routerLink="/budgets" class="text-sm text-blue-600 underline">Presupuestos</a>
       <span class="text-sm text-gray-600">{{ user.email }}</span>
       <button
         type="button"

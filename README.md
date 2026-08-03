@@ -16,10 +16,11 @@ cosas que no se habían tocado todavía:
   dueño (`ownerId`), a diferencia de `prueba-firestore` que las tiene
   abiertas.
 
-> Estado: en construcción, por fases. Fases 1-6 completadas (andamiaje,
+> Estado: en construcción, por fases. Fases 1-8 completadas (andamiaje,
 > Firebase, autenticación y guards, modelo de datos y reglas de seguridad,
-> routing avanzado, formulario con arrays y validación cruzada). Pendientes:
-> validación asíncrona, lazy loading y cierre. Ver el plan completo en
+> routing avanzado, formulario con arrays y validación cruzada, validación
+> asíncrona de nombre de categoría único, presupuestos con lazy loading).
+> Pendiente: tests y cierre. Ver el plan completo en
 > `C:\Users\ASUS\.claude\plans\listo-entonces-me-gustar-a-lively-stroustrup.md`.
 
 ## Estructura de carpetas
@@ -30,7 +31,7 @@ src/app/
 ├── auth/            # login, registro, AuthService
 ├── expenses/        # lista, detalle, formulario, ExpenseService
 ├── categories/      # gestión de categorías, CategoryService
-├── budgets/         # presupuestos mensuales — sección con lazy loading (pendiente)
+├── budgets/         # presupuestos mensuales — sección con lazy loading
 ├── shared/          # layout, navbar, not-found
 ├── app.routes.ts
 └── app.config.ts    # providers, incluida la inicialización de Firebase

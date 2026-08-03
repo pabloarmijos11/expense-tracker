@@ -31,5 +31,10 @@ export const routes: Routes = [
     ],
   },
   { path: 'categories', component: CategoryList, canActivate: [authGuard] },
+  {
+    path: 'budgets',
+    canActivate: [authGuard],
+    loadChildren: () => import('./budgets/budgets.routes'),
+  },
   { path: '**', component: NotFound },
 ];

@@ -11,11 +11,20 @@
       <input
         type="text"
         [formField]="categoryForm.name"
+        [attr.aria-invalid]="categoryForm.name().errors().length > 0"
+        aria-describedby="name-status"
         class="mt-1 w-full rounded border border-gray-300 px-3 py-2"
       />
-      @if (categoryForm.name().touched() && categoryForm.name().errors().length) {
-        <span class="text-sm text-red-600">{{ categoryForm.name().errors()[0].message }}</span>
-      }
+      <span id="name-status" role="status" aria-live="polite">
+        @if (categoryForm.name().pending()) {
+          <span class="text-sm text-gray-500">Comprobando el nombre…</span>
+        } @else if (
+          (categoryForm.name().touched() || categoryForm.name().dirty()) &&
+          categoryForm.name().errors().length
+        ) {
+          <span class="text-sm text-red-600">{{ categoryForm.name().errors()[0].message }}</span>
+        }
+      </span>
     </label>
 
     <label class="text-sm">
@@ -29,7 +38,7 @@
 
     <button
       type="submit"
-      [disabled]="categoryForm().invalid() || submitting()"
+      [disabled]="categoryForm().invalid() || categoryForm().pending() || submitting()"
       class="rounded bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50"
     >
       Agregar
