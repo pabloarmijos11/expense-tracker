@@ -1,23 +1,118 @@
+# expense-tracker — instrucciones para Claude Code
 
-You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
+Gestor de gastos personales con Angular 21 + Firebase. Cada usuario registra sus
+gastos con un desglose opcional por líneas, los clasifica en categorías propias y
+fija presupuestos mensuales por categoría.
 
-## TypeScript Best Practices
+**La historia del proyecto no está aquí.** Decisiones, arquitectura razonada, qué
+dejó cada fase y por qué se descartó lo que se descartó viven en el vault:
+`C:\Users\ASUS\Documents\PERSONAL\PROYECTOS\Vault Proyectos\Wiki\Proyectos\Personales\expense-tracker.md`.
+Este archivo solo lleva lo operativo — lo que hace falta para no meter la pata al
+escribir código. Si algo de aquí contradice al vault, gana el vault.
+
+## Stack
+
+Versiones leídas de `package.json`, no de memoria:
+
+| Paquete | Versión |
+|---|---|
+| `@angular/core`, `@angular/router`, `@angular/forms` | `^21.2.0` |
+| `firebase` | `^12.17.0` |
+| `tailwindcss` | `^4.3.3` |
+| `vitest` / `jsdom` | `^4.0.8` / `^28.0.0` |
+| `typescript` | `~5.9.2` |
+
+Proyecto de Firebase: `expense-tracker-8869b` (propio, separado del de
+`prueba-firestore`). Repositorio: `github.com/pabloarmijos11/expense-tracker`,
+privado, rama `main`.
+
+## Comandos
+
+```bash
+npm start      # ng serve
+npm run build  # ng build
+npm test       # ng test — Vitest, 18 archivos spec
+```
+
+## Idioma
+
+- **Identificadores del código en inglés** (`addBudget`, `nameExists`, `ownerId`).
+- **Textos de UI, mensajes de validación, documentación y commits en español**
+  (`required(s.name, { message: 'El nombre es obligatorio' })`).
+
+No es una regla global de Pablo: se decide por proyecto.
+
+## Reglas de este proyecto
+
+Cinco cosas que rompen algo si se ignoran. Cada una costó encontrarla.
+
+1. **Firebase se inyecta con `InjectionToken` propios, nunca con `@angular/fire`.**
+   `FIRESTORE` y `FIREBASE_AUTH` están en `core/tokens/firebase.ts` y envuelven el
+   SDK modular directo. Es lo que hace testeable el resto: proveerlos como objetos
+   vacíos basta para que ningún test abra una conexión. Cambiar esto rompe los tests.
+
+2. **Todo guard y resolver empieza con `await authService.ready`.**
+   `onAuthStateChanged` no responde de inmediato: al recargar, Firebase tarda un
+   instante en restaurar la sesión y durante ese instante `currentUser` es `null`.
+   Un guard que pregunte antes manda al login a un usuario autenticado. Hay un test
+   que falla si alguien quita ese `await` — está puesto a propósito, no lo silencies.
+
+3. **Formularios con Signal Forms (`@angular/forms/signals`), nunca Reactive ni
+   template-driven.** Antes de escribir cualquier código de formulario, lee
+   `~/.claude/skills/angular-developer/references/signal-forms.md`: documenta los
+   patrones obligatorios y los tropiezos propios de esta API (el más común, confundir
+   `form.name` con `form.name()`).
+
+4. **`firestore.rules` no se publica desde el repo.** Editar el archivo no cambia
+   nada en producción; hay que subir las reglas a mano desde la consola de Firebase.
+   Darlo por hecho es un fallo de seguridad silencioso.
+
+5. **Comparar importes con tolerancia de `0.01`, nunca con `===`.**
+   `0.1 + 0.2` da `0.30000000000000004`. La condición correcta es
+   `Math.abs(sum - value()) > 0.01`.
+
+## Patrón de los servicios de datos
+
+Los tres servicios (`ExpenseService`, `CategoryService`, `BudgetService`) siguen el
+mismo molde y conviene mantenerlo:
+
+- Signals `<entidad>`, `loading` y `error`.
+- Un `effect` que reacciona a `authService.currentUser()` y (re)monta el listener de
+  `onSnapshot`.
+- Desuscripción registrada en `DestroyRef`, para que cambiar de usuario reemplace el
+  listener sin fugas.
+
+Cada consulta que combina `where('ownerId')` con `orderBy(...)` exige un índice
+compuesto; sin él, Firestore responde `failed-precondition`.
+
+## Pendientes conocidos
+
+- `nameExists()` distingue mayúsculas: `comida` y `Comida` conviven como categorías
+  distintas. Arreglarlo pide un campo `nameLower`, que obliga a tocar el `hasOnly` de
+  las reglas y republicarlas.
+- `ng build` avisa `bundle initial exceeded maximum budget` (500 kB configurados). Es
+  conocido y cosmético — lo domina el chunk del SDK de Firebase.
+- La unicidad de `categoryId` + `month` en presupuestos es validación de cliente y no
+  puede estar en las reglas: las reglas no saben buscar "ninguno igual" en una colección.
+
+---
+
+## Reglas generales de Angular
+
+Lo que sigue viene de la skill `angular-developer` y aplica a cualquier proyecto
+Angular, no solo a este. Se mantiene en inglés tal como lo genera la skill.
 
 - Use strict type checking
 - Prefer type inference when the type is obvious
 - Avoid the `any` type; use `unknown` when type is uncertain
-
-## Angular Best Practices
-
 - Always use standalone components over NgModules
 - Must NOT set `standalone: true` inside Angular decorators. It's the default in Angular v20+.
 - Use signals for state management
 - Implement lazy loading for feature routes
 - Do NOT use the `@HostBinding` and `@HostListener` decorators. Put host bindings inside the `host` object of the `@Component` or `@Directive` decorator instead
-- Use `NgOptimizedImage` for all static images.
-  - `NgOptimizedImage` does not work for inline base64 images.
+- Use `NgOptimizedImage` for all static images (does not work for inline base64 images)
 
-## Accessibility Requirements
+### Accessibility
 
 - It MUST pass all AXE checks.
 - It MUST follow all WCAG AA minimums, including focus management, color contrast, and ARIA attributes.
@@ -29,29 +124,25 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use `computed()` for derived state
 - Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
 - Prefer inline templates for small components
-- Use **Signal Forms** (`@angular/forms/signals`) for all forms in this project — NOT classic
-  Reactive Forms (`FormGroup`/`FormControl`/`FormArray`/`FormBuilder`) and NOT template-driven
-  forms. See `~/.claude/skills/angular-developer/references/signal-forms.md` before writing any
-  form code; it documents required patterns and common pitfalls specific to this API.
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
 - When using external templates/styles, use paths relative to the component TS file.
 
-## State Management
+### State Management
 
 - Use signals for local component state
 - Use `computed()` for derived state
 - Keep state transformations pure and predictable
 - Do NOT use `mutate` on signals, use `update` or `set` instead
 
-## Templates
+### Templates
 
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
 - Use the async pipe to handle observables
-- Do not assume globals like (`new Date()`) are available.
+- Do not assume globals like `new Date()` are available.
 
-## Services
+### Services
 
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
