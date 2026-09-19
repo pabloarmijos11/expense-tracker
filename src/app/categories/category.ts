@@ -1,30 +1,18 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { FirebaseError } from 'firebase/app';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
 import { AuthService } from '../auth/auth';
 import { Category, NewCategory } from '../core/models/category';
-import { FIRESTORE } from '../core/tokens/firebase';
+import { FIRESTORE, FIRESTORE_SDK } from '../core/tokens/firebase';
 
 @Injectable({
   providedIn: 'root',
 })
 export class CategoryService {
   private readonly firestore = inject(FIRESTORE);
+  private readonly sdk = inject(FIRESTORE_SDK);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly categoriesCollection = collection(this.firestore, 'categories');
+  private readonly categoriesCollection = this.sdk.collection(this.firestore, 'categories');
 
   readonly categories = signal<Category[]>([]);
   readonly loading = signal(true);
@@ -45,13 +33,13 @@ export class CategoryService {
       }
 
       this.loading.set(true);
-      const categoriesQuery = query(
+      const categoriesQuery = this.sdk.query(
         this.categoriesCollection,
-        where('ownerId', '==', user.uid),
-        orderBy('name'),
+        this.sdk.where('ownerId', '==', user.uid),
+        this.sdk.orderBy('name'),
       );
 
-      this.unsubscribe = onSnapshot(
+      this.unsubscribe = this.sdk.onSnapshot(
         categoriesQuery,
         (snapshot) => {
           this.categories.set(
@@ -79,7 +67,7 @@ export class CategoryService {
 
     const newCategory: NewCategory = { ...category, ownerId: user.uid };
     try {
-      await addDoc(this.categoriesCollection, newCategory);
+      await this.sdk.addDoc(this.categoriesCollection, newCategory);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo agregar la categoría', error);
@@ -106,20 +94,20 @@ export class CategoryService {
       return false;
     }
 
-    const duplicateQuery = query(
+    const duplicateQuery = this.sdk.query(
       this.categoriesCollection,
-      where('ownerId', '==', user.uid),
-      where('name', '==', trimmedName),
-      limit(1),
+      this.sdk.where('ownerId', '==', user.uid),
+      this.sdk.where('name', '==', trimmedName),
+      this.sdk.limit(1),
     );
 
-    const snapshot = await getDocs(duplicateQuery);
+    const snapshot = await this.sdk.getDocs(duplicateQuery);
     return !snapshot.empty;
   }
 
   async updateCategory(id: string, changes: Partial<Omit<NewCategory, 'ownerId'>>): Promise<void> {
     try {
-      await updateDoc(doc(this.firestore, 'categories', id), changes);
+      await this.sdk.updateDoc(this.sdk.doc(this.firestore, 'categories', id), changes);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo actualizar la categoría', error);
@@ -128,7 +116,7 @@ export class CategoryService {
 
   async deleteCategory(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(this.firestore, 'categories', id));
+      await this.sdk.deleteDoc(this.sdk.doc(this.firestore, 'categories', id));
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo eliminar la categoría', error);

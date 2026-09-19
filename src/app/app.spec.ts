@@ -1,24 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
-import { FIREBASE_AUTH } from './core/tokens/firebase';
-
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(() => () => {}),
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  updateProfile: vi.fn(),
-}));
+import { fakeFirebase } from './core/tokens/firebase.fake';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter([]),
-        { provide: FIREBASE_AUTH, useValue: {} as unknown as import('firebase/auth').Auth },
-      ],
+      providers: [provideRouter([]), ...fakeFirebase().providers],
     }).compileComponents();
   });
 

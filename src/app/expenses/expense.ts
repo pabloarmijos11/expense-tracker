@@ -1,29 +1,18 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { FirebaseError } from 'firebase/app';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
 import { AuthService } from '../auth/auth';
 import { Expense, NewExpense } from '../core/models/expense';
-import { FIRESTORE } from '../core/tokens/firebase';
+import { FIRESTORE, FIRESTORE_SDK } from '../core/tokens/firebase';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ExpenseService {
   private readonly firestore = inject(FIRESTORE);
+  private readonly sdk = inject(FIRESTORE_SDK);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly expensesCollection = collection(this.firestore, 'expenses');
+  private readonly expensesCollection = this.sdk.collection(this.firestore, 'expenses');
 
   readonly expenses = signal<Expense[]>([]);
   readonly loading = signal(true);
@@ -44,13 +33,13 @@ export class ExpenseService {
       }
 
       this.loading.set(true);
-      const expensesQuery = query(
+      const expensesQuery = this.sdk.query(
         this.expensesCollection,
-        where('ownerId', '==', user.uid),
-        orderBy('date', 'desc'),
+        this.sdk.where('ownerId', '==', user.uid),
+        this.sdk.orderBy('date', 'desc'),
       );
 
-      this.unsubscribe = onSnapshot(
+      this.unsubscribe = this.sdk.onSnapshot(
         expensesQuery,
         (snapshot) => {
           this.expenses.set(
@@ -78,7 +67,7 @@ export class ExpenseService {
 
     const newExpense: NewExpense = { ...expense, ownerId: user.uid, createdAt: Date.now() };
     try {
-      await addDoc(this.expensesCollection, newExpense);
+      await this.sdk.addDoc(this.expensesCollection, newExpense);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo agregar el gasto', error);
@@ -90,7 +79,7 @@ export class ExpenseService {
     changes: Partial<Omit<NewExpense, 'ownerId' | 'createdAt'>>,
   ): Promise<void> {
     try {
-      await updateDoc(doc(this.firestore, 'expenses', id), changes);
+      await this.sdk.updateDoc(this.sdk.doc(this.firestore, 'expenses', id), changes);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo actualizar el gasto', error);
@@ -99,7 +88,7 @@ export class ExpenseService {
 
   async deleteExpense(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(this.firestore, 'expenses', id));
+      await this.sdk.deleteDoc(this.sdk.doc(this.firestore, 'expenses', id));
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo eliminar el gasto', error);
@@ -107,7 +96,7 @@ export class ExpenseService {
   }
 
   async getExpenseById(id: string): Promise<Expense | null> {
-    const snapshot = await getDoc(doc(this.firestore, 'expenses', id));
+    const snapshot = await this.sdk.getDoc(this.sdk.doc(this.firestore, 'expenses', id));
     if (!snapshot.exists()) {
       return null;
     }

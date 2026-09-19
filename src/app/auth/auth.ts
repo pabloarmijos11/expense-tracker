@@ -1,20 +1,14 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { FirebaseError } from 'firebase/app';
-import {
-  User,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-} from 'firebase/auth';
-import { FIREBASE_AUTH } from '../core/tokens/firebase';
+import type { User } from 'firebase/auth';
+import { AUTH_SDK, FIREBASE_AUTH } from '../core/tokens/firebase';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly auth = inject(FIREBASE_AUTH);
+  private readonly sdk = inject(AUTH_SDK);
 
   readonly currentUser = signal<User | null>(null);
   readonly loading = signal(true);
@@ -27,7 +21,7 @@ export class AuthService {
   });
 
   constructor() {
-    onAuthStateChanged(this.auth, (user) => {
+    this.sdk.onAuthStateChanged(this.auth, (user) => {
       this.currentUser.set(user);
       this.loading.set(false);
       this.resolveReady();
@@ -36,8 +30,8 @@ export class AuthService {
 
   async register(email: string, password: string, displayName: string): Promise<boolean> {
     try {
-      const credential = await createUserWithEmailAndPassword(this.auth, email, password);
-      await updateProfile(credential.user, { displayName });
+      const credential = await this.sdk.createUserWithEmailAndPassword(this.auth, email, password);
+      await this.sdk.updateProfile(credential.user, { displayName });
       this.error.set(null);
       return true;
     } catch (error) {
@@ -48,7 +42,7 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<boolean> {
     try {
-      await signInWithEmailAndPassword(this.auth, email, password);
+      await this.sdk.signInWithEmailAndPassword(this.auth, email, password);
       this.error.set(null);
       return true;
     } catch (error) {
@@ -59,7 +53,7 @@ export class AuthService {
 
   async logout(): Promise<void> {
     try {
-      await signOut(this.auth);
+      await this.sdk.signOut(this.auth);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo cerrar sesión', error);

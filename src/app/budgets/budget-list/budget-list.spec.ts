@@ -8,28 +8,6 @@ import { ExpenseService } from '../../expenses/expense';
 import { BudgetService } from '../budget';
 import { BudgetList } from './budget-list';
 
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(() => () => {}),
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  updateProfile: vi.fn(),
-}));
-
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  orderBy: vi.fn(),
-  limit: vi.fn(),
-  onSnapshot: vi.fn(),
-  getDocs: vi.fn(),
-  addDoc: vi.fn(),
-  updateDoc: vi.fn(),
-  deleteDoc: vi.fn(),
-}));
-
 /**
  * Los tres servicios se reemplazan por dobles con signals escribibles: lo que
  * se prueba acá es la lógica del componente, no el listener de Firestore.

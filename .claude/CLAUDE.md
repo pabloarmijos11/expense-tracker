@@ -6,7 +6,8 @@ fija presupuestos mensuales por categoría.
 
 **La historia del proyecto no está aquí.** Decisiones, arquitectura razonada, qué
 dejó cada fase y por qué se descartó lo que se descartó viven en el vault:
-`C:\Users\ASUS\Documents\PERSONAL\PROYECTOS\Vault Proyectos\Wiki\Proyectos\Personales\expense-tracker.md`.
+`Vault Proyectos/Wiki/Proyectos/Personales/expense-tracker.md`, en el vault
+personal (repositorio privado aparte, no incluido aquí).
 Este archivo solo lleva lo operativo — lo que hace falta para no meter la pata al
 escribir código. Si algo de aquí contradice al vault, gana el vault.
 
@@ -64,10 +65,30 @@ No es una regla global de Pablo: se decide por proyecto.
 
 Cinco cosas que rompen algo si se ignoran. Cada una costó encontrarla.
 
-1. **Firebase se inyecta con `InjectionToken` propios, nunca con `@angular/fire`.**
-   `FIRESTORE` y `FIREBASE_AUTH` están en `core/tokens/firebase.ts` y envuelven el
-   SDK modular directo. Es lo que hace testeable el resto: proveerlos como objetos
-   vacíos basta para que ningún test abra una conexión. Cambiar esto rompe los tests.
+1. **Firebase entra entero por `InjectionToken`, nunca con `@angular/fire` ni con
+   un import directo del SDK.** Son cuatro tokens en `core/tokens/firebase.ts`:
+   `FIRESTORE` y `FIREBASE_AUTH` (las instancias) y **`AUTH_SDK` y `FIRESTORE_SDK`
+   (las funciones)**. `app.config.ts` es el único archivo que importa valores de
+   `firebase/auth` o `firebase/firestore`; los servicios llaman `this.sdk.getDocs(…)`.
+
+   **Lo que se intentó antes y no funciona: `vi.mock('firebase/firestore')`.** El
+   builder de Angular empaqueta todos los specs juntos y reparte los módulos
+   compartidos en chunks por su cuenta, y ese reparto no es igual en Windows que en
+   Linux. El spec acababa vigilando una copia del doble mientras el servicio llamaba
+   a otra: `mock.calls` vacío, `mockResolvedValue()` sin efecto. Síntoma: **66 tests
+   verdes en local y 23 rojos en CI** (2026-09-18), con los 4 specs afectados siendo
+   exactamente los 4 que programaban dobles con `vi.mocked()`.
+
+   Regla, la misma que en reading-shelf: **lo que hay que sustituir en un test se
+   inyecta, no se importa.** Los dobles están en `core/tokens/firebase.fake.ts`
+   (`fakeAuthSdk()`, `fakeFirestoreSdk()`, `fakeFirebase()`). Un spec nuevo usa
+   `providers: [...fakeFirebase().providers]` y no escribe ningún `vi.mock`.
+
+   Dos detalles de configuración que esto arrastra: `*.fake.ts` va en el `include`
+   de `tsconfig.spec.json` (usa `vi`) y en el `exclude` de `tsconfig.app.json` (o el
+   build de producción falla porque ahí `vi` no existe). Y en los specs, los tipos
+   del SDK se importan con `import type`, para que no quede ninguna dependencia de
+   módulo en tiempo de ejecución.
 
 2. **Todo guard y resolver empieza con `await authService.ready`.**
    `onAuthStateChanged` no responde de inmediato: al recargar, Firebase tarda un

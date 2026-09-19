@@ -1,48 +1,30 @@
 import { TestBed } from '@angular/core/testing';
 import { FirebaseError } from 'firebase/app';
-import {
-  User,
-  UserCredential,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-} from 'firebase/auth';
-import { FIREBASE_AUTH } from '../core/tokens/firebase';
+import type { User, UserCredential } from 'firebase/auth';
+import { fakeAuthSdk } from '../core/tokens/firebase.fake';
 import { AuthService } from './auth';
-
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(() => () => {}),
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  updateProfile: vi.fn(),
-}));
-
-const AUTH = {} as unknown as import('firebase/auth').Auth;
 
 function fakeUser(uid = 'user-1'): User {
   return { uid, email: 'ada@example.com' } as User;
 }
 
-/** El callback que el constructor registró en onAuthStateChanged. */
-function authStateCallback(): (user: User | null) => void {
-  const [, callback] = vi.mocked(onAuthStateChanged).mock.calls[0];
-  return callback as (user: User | null) => void;
-}
-
 describe('AuthService', () => {
   let service: AuthService;
+  // El SDK ya no se sustituye con `vi.mock` sino por token: el spec provee
+  // estos dobles y `AuthService` recibe exactamente estos, sin depender de qué
+  // copia del módulo le toque al chunk que arme el builder.
+  let sdk: ReturnType<typeof fakeAuthSdk>;
+  /** La instancia de Auth que deben recibir las funciones del SDK. */
+  let AUTH: ReturnType<typeof fakeAuthSdk>['auth'];
 
   beforeEach(() => {
-    vi.clearAllMocks();
     // reportError() escribe en consola: se silencia para no ensuciar la salida.
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    TestBed.configureTestingModule({
-      providers: [{ provide: FIREBASE_AUTH, useValue: AUTH }],
-    });
+    sdk = fakeAuthSdk();
+    AUTH = sdk.auth;
+
+    TestBed.configureTestingModule({ providers: sdk.providers });
     service = TestBed.inject(AuthService);
   });
 
@@ -60,7 +42,7 @@ describe('AuthService', () => {
     it('publica el usuario y termina de cargar cuando Firebase restaura la sesión', async () => {
       const user = fakeUser();
 
-      authStateCallback()(user);
+      sdk.emitAuthState(user);
 
       expect(service.currentUser()).toBe(user);
       expect(service.loading()).toBe(false);
@@ -69,7 +51,7 @@ describe('AuthService', () => {
     });
 
     it('termina de cargar aunque no haya sesión previa', async () => {
-      authStateCallback()(null);
+      sdk.emitAuthState(null);
 
       expect(service.currentUser()).toBeNull();
       expect(service.loading()).toBe(false);
@@ -81,23 +63,23 @@ describe('AuthService', () => {
   describe('register()', () => {
     it('crea la cuenta y le asigna el displayName', async () => {
       const user = fakeUser();
-      vi.mocked(createUserWithEmailAndPassword).mockResolvedValue({ user } as UserCredential);
-      vi.mocked(updateProfile).mockResolvedValue(undefined);
+      sdk.fns.createUserWithEmailAndPassword.mockResolvedValue({ user } as UserCredential);
+      sdk.fns.updateProfile.mockResolvedValue(undefined);
 
       const ok = await service.register('ada@example.com', 'secreto123', 'Ada');
 
       expect(ok).toBe(true);
-      expect(createUserWithEmailAndPassword).toHaveBeenCalledWith(
+      expect(sdk.fns.createUserWithEmailAndPassword).toHaveBeenCalledWith(
         AUTH,
         'ada@example.com',
         'secreto123',
       );
-      expect(updateProfile).toHaveBeenCalledWith(user, { displayName: 'Ada' });
+      expect(sdk.fns.updateProfile).toHaveBeenCalledWith(user, { displayName: 'Ada' });
       expect(service.error()).toBeNull();
     });
 
     it('devuelve false y traduce el correo ya registrado', async () => {
-      vi.mocked(createUserWithEmailAndPassword).mockRejectedValue(
+      sdk.fns.createUserWithEmailAndPassword.mockRejectedValue(
         new FirebaseError('auth/email-already-in-use', 'Email already in use'),
       );
 
@@ -107,11 +89,11 @@ describe('AuthService', () => {
       expect(service.error()).toBe(
         'No se pudo crear la cuenta: ya existe una cuenta con ese correo.',
       );
-      expect(updateProfile).not.toHaveBeenCalled();
+      expect(sdk.fns.updateProfile).not.toHaveBeenCalled();
     });
 
     it('traduce la contraseña débil', async () => {
-      vi.mocked(createUserWithEmailAndPassword).mockRejectedValue(
+      sdk.fns.createUserWithEmailAndPassword.mockRejectedValue(
         new FirebaseError('auth/weak-password', 'Weak password'),
       );
 
@@ -125,19 +107,19 @@ describe('AuthService', () => {
 
   describe('login()', () => {
     it('inicia sesión con las credenciales recibidas', async () => {
-      vi.mocked(signInWithEmailAndPassword).mockResolvedValue({
+      sdk.fns.signInWithEmailAndPassword.mockResolvedValue({
         user: fakeUser(),
       } as UserCredential);
 
       const ok = await service.login('ada@example.com', 'secreto123');
 
       expect(ok).toBe(true);
-      expect(signInWithEmailAndPassword).toHaveBeenCalledWith(AUTH, 'ada@example.com', 'secreto123');
+      expect(sdk.fns.signInWithEmailAndPassword).toHaveBeenCalledWith(AUTH, 'ada@example.com', 'secreto123');
       expect(service.error()).toBeNull();
     });
 
     it('devuelve false y traduce las credenciales inválidas', async () => {
-      vi.mocked(signInWithEmailAndPassword).mockRejectedValue(
+      sdk.fns.signInWithEmailAndPassword.mockRejectedValue(
         new FirebaseError('auth/invalid-credential', 'Invalid credential'),
       );
 
@@ -148,7 +130,7 @@ describe('AuthService', () => {
     });
 
     it('deja el código a la vista cuando el error de Firebase no está contemplado', async () => {
-      vi.mocked(signInWithEmailAndPassword).mockRejectedValue(
+      sdk.fns.signInWithEmailAndPassword.mockRejectedValue(
         new FirebaseError('auth/network-request-failed', 'Network error'),
       );
 
@@ -160,7 +142,7 @@ describe('AuthService', () => {
     });
 
     it('no asume que todo error sea de Firebase', async () => {
-      vi.mocked(signInWithEmailAndPassword).mockRejectedValue(new Error('algo explotó'));
+      sdk.fns.signInWithEmailAndPassword.mockRejectedValue(new Error('algo explotó'));
 
       await service.login('ada@example.com', 'secreto123');
 
@@ -168,13 +150,13 @@ describe('AuthService', () => {
     });
 
     it('limpia el error de un intento anterior al acertar', async () => {
-      vi.mocked(signInWithEmailAndPassword).mockRejectedValueOnce(
+      sdk.fns.signInWithEmailAndPassword.mockRejectedValueOnce(
         new FirebaseError('auth/invalid-credential', 'Invalid credential'),
       );
       await service.login('ada@example.com', 'mala');
       expect(service.error()).not.toBeNull();
 
-      vi.mocked(signInWithEmailAndPassword).mockResolvedValue({
+      sdk.fns.signInWithEmailAndPassword.mockResolvedValue({
         user: fakeUser(),
       } as UserCredential);
       await service.login('ada@example.com', 'secreto123');
@@ -185,16 +167,16 @@ describe('AuthService', () => {
 
   describe('logout()', () => {
     it('cierra la sesión', async () => {
-      vi.mocked(signOut).mockResolvedValue(undefined);
+      sdk.fns.signOut.mockResolvedValue(undefined);
 
       await service.logout();
 
-      expect(signOut).toHaveBeenCalledWith(AUTH);
+      expect(sdk.fns.signOut).toHaveBeenCalledWith(AUTH);
       expect(service.error()).toBeNull();
     });
 
     it('reporta el fallo al cerrar sesión', async () => {
-      vi.mocked(signOut).mockRejectedValue(new FirebaseError('auth/network-request-failed', 'x'));
+      sdk.fns.signOut.mockRejectedValue(new FirebaseError('auth/network-request-failed', 'x'));
 
       await service.logout();
 
@@ -205,7 +187,7 @@ describe('AuthService', () => {
   });
 
   it('dismissError() borra el error visible', async () => {
-    vi.mocked(signInWithEmailAndPassword).mockRejectedValue(
+    sdk.fns.signInWithEmailAndPassword.mockRejectedValue(
       new FirebaseError('auth/invalid-credential', 'Invalid credential'),
     );
     await service.login('ada@example.com', 'mala');

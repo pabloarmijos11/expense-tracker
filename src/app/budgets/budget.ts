@@ -1,28 +1,18 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 import { FirebaseError } from 'firebase/app';
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
 import { AuthService } from '../auth/auth';
 import { Budget, NewBudget } from '../core/models/budget';
-import { FIRESTORE } from '../core/tokens/firebase';
+import { FIRESTORE, FIRESTORE_SDK } from '../core/tokens/firebase';
 
 @Injectable({
   providedIn: 'root',
 })
 export class BudgetService {
   private readonly firestore = inject(FIRESTORE);
+  private readonly sdk = inject(FIRESTORE_SDK);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly budgetsCollection = collection(this.firestore, 'budgets');
+  private readonly budgetsCollection = this.sdk.collection(this.firestore, 'budgets');
 
   readonly budgets = signal<Budget[]>([]);
   readonly loading = signal(true);
@@ -43,13 +33,13 @@ export class BudgetService {
       }
 
       this.loading.set(true);
-      const budgetsQuery = query(
+      const budgetsQuery = this.sdk.query(
         this.budgetsCollection,
-        where('ownerId', '==', user.uid),
-        orderBy('month', 'desc'),
+        this.sdk.where('ownerId', '==', user.uid),
+        this.sdk.orderBy('month', 'desc'),
       );
 
-      this.unsubscribe = onSnapshot(
+      this.unsubscribe = this.sdk.onSnapshot(
         budgetsQuery,
         (snapshot) => {
           this.budgets.set(
@@ -77,7 +67,7 @@ export class BudgetService {
 
     const newBudget: NewBudget = { ...budget, ownerId: user.uid };
     try {
-      await addDoc(this.budgetsCollection, newBudget);
+      await this.sdk.addDoc(this.budgetsCollection, newBudget);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo agregar el presupuesto', error);
@@ -86,7 +76,7 @@ export class BudgetService {
 
   async updateBudget(id: string, changes: Partial<Omit<NewBudget, 'ownerId'>>): Promise<void> {
     try {
-      await updateDoc(doc(this.firestore, 'budgets', id), changes);
+      await this.sdk.updateDoc(this.sdk.doc(this.firestore, 'budgets', id), changes);
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo actualizar el presupuesto', error);
@@ -95,7 +85,7 @@ export class BudgetService {
 
   async deleteBudget(id: string): Promise<void> {
     try {
-      await deleteDoc(doc(this.firestore, 'budgets', id));
+      await this.sdk.deleteDoc(this.sdk.doc(this.firestore, 'budgets', id));
       this.error.set(null);
     } catch (error) {
       this.reportError('No se pudo eliminar el presupuesto', error);

@@ -6,30 +6,18 @@ import {
   UrlTree,
   provideRouter,
 } from '@angular/router';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { AuthService } from '../../auth/auth';
-import { FIREBASE_AUTH } from '../tokens/firebase';
+import { fakeAuthSdk } from '../tokens/firebase.fake';
 import { authGuard } from './auth-guard';
-
-vi.mock('firebase/auth', () => ({
-  onAuthStateChanged: vi.fn(() => () => {}),
-  createUserWithEmailAndPassword: vi.fn(),
-  signInWithEmailAndPassword: vi.fn(),
-  signOut: vi.fn(),
-  updateProfile: vi.fn(),
-}));
 
 const route = {} as ActivatedRouteSnapshot;
 const state = {} as RouterStateSnapshot;
 
 describe('authGuard', () => {
   let router: Router;
-
   /** Simula lo que Firebase notifica al restaurar (o no) la sesión. */
-  function emitAuthState(user: User | null): void {
-    const [, callback] = vi.mocked(onAuthStateChanged).mock.calls[0];
-    (callback as (user: User | null) => void)(user);
-  }
+  let emitAuthState: (user: User | null) => void;
 
   function executeGuard(): Promise<boolean | UrlTree> {
     return TestBed.runInInjectionContext(() => authGuard(route, state)) as Promise<
@@ -43,13 +31,11 @@ describe('authGuard', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    const auth = fakeAuthSdk();
+    emitAuthState = auth.emitAuthState;
 
     TestBed.configureTestingModule({
-      providers: [
-        provideRouter([]),
-        { provide: FIREBASE_AUTH, useValue: {} as unknown as import('firebase/auth').Auth },
-      ],
+      providers: [provideRouter([]), ...auth.providers],
     });
 
     router = TestBed.inject(Router);
