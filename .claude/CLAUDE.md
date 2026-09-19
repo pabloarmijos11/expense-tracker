@@ -24,15 +24,33 @@ Versiones leídas de `package.json`, no de memoria:
 
 Proyecto de Firebase: `expense-tracker-8869b` (propio, separado del de
 `prueba-firestore`). Repositorio: `github.com/pabloarmijos11/expense-tracker`,
-privado, rama `main`.
+**público desde el 2026-09-18**, rama `master` (no `main` — reading-shelf sí
+usa `main`, y esa diferencia es real, no un descuido de este archivo).
+
+Producción: https://expense-tracker-pablo.vercel.app (Vercel, cuenta
+DINHONETA). El dominio está dado de alta **como dominio del proyecto**, no
+como alias de un despliegue suelto: un alias creado con `vercel alias set`
+queda clavado al despliegue que existía en ese momento y seguiría sirviendo el
+build viejo tras el siguiente deploy, sin avisar de nada.
 
 ## Comandos
 
 ```bash
 npm start      # ng serve
 npm run build  # ng build
-npm test       # ng test — Vitest, 18 archivos spec
+npm test       # ng test — Vitest, 66 tests en 18 archivos spec
 ```
+
+El CI (`.github/workflows/ci.yml`) corre esos dos últimos en cada push y cada
+pull request. No despliega.
+
+**El despliegue es manual, con `vercel deploy --prod`.** No por decisión, sino
+porque `vercel git connect` falla: la app de Vercel en GitHub tiene acceso solo
+a los repositorios que se le concedieron uno a uno, y este no está entre ellos.
+Para arreglarlo hay que ir a `github.com/settings/installations` → Vercel →
+*Repository access* y añadir `expense-tracker`; después `vercel git connect`
+funciona y cada push a `master` despliega solo. Mientras tanto, **un push no
+actualiza producción**: hay que acordarse de lanzar el deploy a mano.
 
 ## Idioma
 
@@ -90,8 +108,9 @@ compuesto; sin él, Firestore responde `failed-precondition`.
 - `nameExists()` distingue mayúsculas: `comida` y `Comida` conviven como categorías
   distintas. Arreglarlo pide un campo `nameLower`, que obliga a tocar el `hasOnly` de
   las reglas y republicarlas.
-- `ng build` avisa `bundle initial exceeded maximum budget` (500 kB configurados). Es
-  conocido y cosmético — lo domina el chunk del SDK de Firebase.
+- El presupuesto de bundle se ajustó al tamaño real del proyecto (commit
+  `f37c948`), así que `ng build` ya no avisa. Lo que domina el bundle inicial
+  sigue siendo el chunk del SDK de Firebase.
 - La unicidad de `categoryId` + `month` en presupuestos es validación de cliente y no
   puede estar en las reglas: las reglas no saben buscar "ninguno igual" en una colección.
 

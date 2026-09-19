@@ -1,0 +1,50 @@
+# Integración continua.
+#
+# Un solo job, a diferencia de reading-shelf: este proyecto no tiene suite
+# end-to-end ni despliegue lanzado desde aquí, así que no hay nada que separar.
+# Los 66 tests unitarios no tocan la red —el SDK de Firebase se sustituye por
+# dobles— y por eso pueden correr en cada push y en cada pull request sin
+# pelearse con nadie ni necesitar credenciales.
+#
+# Este workflow no despliega. Es una diferencia deliberada con reading-shelf,
+# donde el deploy cuelga de `needs: e2e` para que una suite en rojo no llegue a
+# producción: allí hay E2E contra el Firebase real que justifican esa puerta, y
+# aquí el coste de montar y mantener un token de despliegue no compensa para
+# una app de práctica.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Un push nuevo deja el anterior sin sentido. Cancelarlo mantiene la cola
+# corta, salvo en master, donde cada corrida es el registro de un cambio ya
+# integrado.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  check:
+    name: Tests unitarios y build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      # `npm ci` en vez de `npm install`: instala exactamente lo que dice el
+      # lockfile y falla si los dos archivos no concuerdan, que es justo para
+      # lo que sirve correr esto en una máquina distinta de la que los escribió.
+      - run: npm ci
+
+      # Vitest se quedaría en modo watch y no devolvería nunca el control.
+      - name: Tests unitarios
+        run: npm test -- --watch=false
+
+      - name: Build de producción
+        run: npm run build
