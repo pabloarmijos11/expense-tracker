@@ -25,11 +25,11 @@ Versiones leídas de `package.json`, no de memoria:
 
 Proyecto de Firebase: `expense-tracker-8869b` (propio, separado del de
 `prueba-firestore`). Repositorio: `github.com/pabloarmijos11/expense-tracker`,
-**público desde el 2026-09-18**, rama `master` (no `main` — reading-shelf sí
+**público desde el 2026-09-20**, rama `master` (no `main` — reading-shelf sí
 usa `main`, y esa diferencia es real, no un descuido de este archivo).
 
-Producción: https://expense-tracker-pablo.vercel.app (Vercel, cuenta
-DINHONETA). El dominio está dado de alta **como dominio del proyecto**, no
+Producción: https://expense-tracker-pablo.vercel.app (Vercel, plan Hobby).
+El dominio está dado de alta **como dominio del proyecto**, no
 como alias de un despliegue suelto: un alias creado con `vercel alias set`
 queda clavado al despliegue que existía en ese momento y seguiría sirviendo el
 build viejo tras el siguiente deploy, sin avisar de nada.
