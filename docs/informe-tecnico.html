@@ -1,0 +1,515 @@
+<meta charset="utf-8">
+<title>Expense Tracker — Informe Técnico</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  @page :first { margin: 0; }
+
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  :root {
+    --ink:    #16202e;
+    --muted:  #5b6b80;
+    --line:   #d7dee8;
+    --brand:  #1d4d3e;
+    --accent: #2e8b6a;
+    --soft:   #f1f8f4;
+    --code:   #f4f8f6;
+  }
+
+  body {
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    color: var(--ink); font-size: 10.2pt; line-height: 1.55; margin: 0;
+  }
+
+  /* ---------- Portada ---------- */
+  .cover {
+    height: 297mm; padding: 46mm 22mm 20mm;
+    background: linear-gradient(160deg, #143a2e 0%, #1d4d3e 55%, #2e8b6a 100%);
+    color: #fff; page-break-after: always; display: flex; flex-direction: column;
+  }
+  .cover .mark { font-size: 40pt; line-height: 1; margin-bottom: 10mm; }
+  .cover h1 { font-size: 34pt; margin: 0 0 4mm; font-weight: 650; letter-spacing: -0.5pt; }
+  .cover .sub { font-size: 13pt; opacity: .88; font-weight: 300; margin-bottom: 16mm; }
+  .cover .rule { width: 46mm; height: 2.5pt; background: rgba(255,255,255,.55); margin-bottom: 12mm; }
+  .cover dl { display: grid; grid-template-columns: 26mm 1fr; gap: 3mm 6mm; font-size: 10pt; margin: 0; }
+  .cover dt { opacity: .7; text-transform: uppercase; letter-spacing: .8pt; font-size: 8pt; padding-top: 1.2pt; }
+  .cover dd { margin: 0; }
+  .cover .foot { margin-top: auto; font-size: 8.5pt; opacity: .65; }
+
+  /* ---------- Cuerpo ---------- */
+  h2 { font-size: 15pt; color: var(--brand); margin: 9mm 0 3mm;
+       padding-bottom: 1.6mm; border-bottom: 1.6pt solid var(--accent); page-break-after: avoid; }
+  h2:first-of-type { margin-top: 0; }
+  h3 { font-size: 11.4pt; color: var(--brand); margin: 6mm 0 2mm; page-break-after: avoid; }
+  p { margin: 0 0 3mm; text-align: justify; }
+
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; font-size: 9.2pt; page-break-inside: avoid; }
+  th { background: var(--brand); color: #fff; text-align: left; padding: 2mm 2.6mm; font-weight: 600; font-size: 8.8pt; }
+  td { padding: 2mm 2.6mm; border-bottom: .6pt solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--soft); }
+  td.num { text-align: center; font-variant-numeric: tabular-nums; width: 12mm; }
+  tfoot td { font-weight: 700; background: #e0f0e8 !important; border-top: 1.2pt solid var(--accent); }
+
+  code { font-family: Consolas, "Courier New", monospace; font-size: .89em; background: var(--code);
+         padding: .4mm 1.1mm; border-radius: 2px; color: #15503d; }
+  pre {
+    background: #10281f; color: #d8e9e1; padding: 3.2mm 4mm; border-radius: 3px;
+    font-family: Consolas, "Courier New", monospace; font-size: 8.3pt; line-height: 1.5;
+    white-space: pre-wrap; margin: 2mm 0 4mm; page-break-inside: avoid;
+  }
+  pre .c { color: #85ab9c; }
+  pre .k { color: #86dcff; }
+  pre .s { color: #b9e6a8; }
+  pre .w { color: #ffc98b; }
+  pre .e { color: #ff9c8f; }
+
+  figure { margin: 4mm 0 5mm; page-break-inside: avoid; text-align: center; }
+  figure svg { max-width: 100%; height: auto; }
+  figcaption { font-size: 8.3pt; color: var(--muted); margin-top: 2mm; text-align: center; }
+
+  .callout { border-left: 2.6pt solid var(--accent); background: var(--soft);
+             padding: 2.6mm 4mm; margin: 3mm 0 4mm; page-break-inside: avoid; }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout .lbl { font-weight: 700; color: var(--brand); }
+
+  .break { page-break-before: always; }
+  ul { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.4mm; }
+</style>
+
+<!-- ========================= PORTADA ========================= -->
+<div class="cover">
+  <div class="mark">💸</div>
+  <h1>Expense Tracker</h1>
+  <div class="sub">Gestor de gastos personales con Angular 21 y Firebase<br>Informe técnico</div>
+  <div class="rule"></div>
+  <dl>
+    <dt>Autor</dt><dd>Pablo Nicolás Armijos Sánchez</dd>
+    <dt>Demo</dt><dd>expense-tracker-pablo.vercel.app</dd>
+    <dt>Repositorio</dt><dd>github.com/pabloarmijos11/expense-tracker</dd>
+    <dt>Stack</dt><dd>Angular 21.2 · Signal Forms · Firebase 12 · Tailwind CSS 4 · Vitest · GitHub Actions · Vercel</dd>
+    <dt>Licencia</dt><dd>MIT</dd>
+    <dt>Fecha</dt><dd>21 de septiembre de 2026</dd>
+  </dl>
+  <div class="foot">66 pruebas unitarias · 29 archivos TypeScript · integración continua en verde</div>
+</div>
+
+<!-- ========================= 1 ========================= -->
+<h2>1. Contexto y objetivos</h2>
+
+<p><strong>Expense Tracker</strong> permite registrar gastos con un desglose opcional por líneas,
+clasificarlos en categorías propias y fijar presupuestos mensuales por categoría para saber
+cuánto queda del mes. Cada usuario ve únicamente sus datos.</p>
+
+<p>El proyecto se construyó para practicar a fondo cuatro terrenos concretos de Angular 21, y
+terminó enseñando algo que no estaba en el plan: un fallo de pruebas que obligó a cambiar cómo
+la aplicación recibe sus dependencias. Esa sección (la 5) es la parte más útil de este informe.</p>
+
+<table>
+  <tr><th style="width:36%">Objetivo</th><th>Cómo se cumple</th></tr>
+  <tr><td>Formularios complejos</td>
+      <td><strong>Signal Forms</strong>, la API que estrena Angular 21: líneas dinámicas, validación cruzada y validación asíncrona contra la base de datos.</td></tr>
+  <tr><td>Routing avanzado</td>
+      <td>Rutas anidadas, tres guards con propósitos distintos y un resolver que carga el gasto antes de entrar.</td></tr>
+  <tr><td>Carga diferida</td>
+      <td>La sección de presupuestos viaja en su propio paquete, con el guard colocado donde de verdad evita la descarga.</td></tr>
+  <tr><td>Datos cerrados por dueño</td>
+      <td>Reglas de Firestore con <code>ownerId</code> validado en cada operación e inmutable tras la creación.</td></tr>
+  <tr><td>Pruebas que verifiquen de verdad</td>
+      <td>66 pruebas que no tocan la red, tras rehacer la forma de sustituir el SDK de Firebase (sección 5).</td></tr>
+</table>
+
+<!-- ========================= 2 ========================= -->
+<h2>2. Arquitectura y navegación</h2>
+
+<p>La aplicación se organiza por dominio: cada carpeta reúne el servicio, los componentes y las
+pruebas de una misma parcela del problema. El acceso a Firestore no se dispersa por los
+componentes; vive en un servicio por colección.</p>
+
+<table>
+  <tr><th style="width:26%">Carpeta</th><th>Contenido</th></tr>
+  <tr><td><code>core/tokens</code></td><td>Los tokens de inyección de Firebase y sus dobles para pruebas. El centro de la sección 5.</td></tr>
+  <tr><td><code>core/guards</code></td><td><code>authGuard</code>, <code>guestGuard</code> y <code>unsavedChangesGuard</code>.</td></tr>
+  <tr><td><code>core/resolvers</code></td><td><code>expenseResolver</code>: carga el gasto antes de construir la pantalla.</td></tr>
+  <tr><td><code>expenses</code></td><td>Lista, detalle y formulario, más <code>ExpenseService</code>.</td></tr>
+  <tr><td><code>categories</code> · <code>budgets</code></td><td>Una carpeta por dominio. Presupuestos se carga de forma diferida.</td></tr>
+</table>
+
+<h3>2.1 Tres guards que no hacen lo mismo</h3>
+
+<table>
+  <tr><th style="width:30%">Guard</th><th>Qué impide</th></tr>
+  <tr><td><code>authGuard</code></td><td>Entrar a una zona privada sin sesión.</td></tr>
+  <tr><td><code>guestGuard</code></td><td>Volver al login o al registro <em>teniendo</em> sesión abierta.</td></tr>
+  <tr><td><code>unsavedChangesGuard</code></td><td>Abandonar el formulario con cambios sin guardar. Es un <code>canDeactivate</code>: actúa al salir, no al entrar.</td></tr>
+</table>
+
+<h3>2.2 Dónde se coloca el guard de una sección diferida</h3>
+
+<p>La sección de presupuestos se carga con <code>loadChildren</code>. El guard que la protege está
+en la ruta <em>padre</em>, y no es un detalle de estilo:</p>
+
+<pre>{ path: <span class="s">'budgets'</span>,
+  canActivate: [authGuard],                              <span class="c">// aquí sí sirve</span>
+  loadChildren: () => <span class="k">import</span>(<span class="s">'./budgets/budgets.routes'</span>) }</pre>
+
+<p>Un guard escrito dentro del archivo de rutas diferido no evitaría la descarga del paquete:
+para leer esas rutas el navegador ya ha tenido que bajarlo. Colocarlo en el padre es lo que hace
+que un visitante sin sesión no llegue siquiera a pedir el código de una sección que no puede ver.</p>
+
+<!-- ========================= 3 ========================= -->
+<div class="break"></div>
+<h2>3. Signal Forms: el núcleo técnico</h2>
+
+<p>Angular 21 introduce <code>@angular/forms/signals</code>, una forma de declarar formularios
+donde el estado es una señal y las reglas se describen sobre la forma del modelo. El formulario
+de gasto utiliza los tres casos que la hacen interesante.</p>
+
+<h3>3.1 Un array de campos que crece y mengua</h3>
+
+<p>Un gasto puede desglosarse en líneas. <code>applyEach</code> aplica las mismas reglas a cada
+elemento del array, exista uno o veinte, sin escribir la validación por índice.</p>
+
+<pre>applyEach(s.lines, (line) => {
+  required(line.label,  { message: <span class="s">'La línea necesita una etiqueta'</span> });
+  min(line.amount, 0.01, { message: <span class="s">'El monto debe ser mayor a 0'</span> });
+});</pre>
+
+<h3>3.2 Validación cruzada: las líneas contra el total</h3>
+
+<p>Si el gasto tiene desglose, la suma de las líneas debe coincidir con el total. La regla no
+pertenece a ningún campo aislado, sino a la relación entre dos: <code>valueOf</code> permite leer
+otra parte del modelo desde la validación de un campo.</p>
+
+<pre>validate(s.total, ({ value, valueOf }) => {
+  <span class="k">const</span> lines = valueOf(s.lines);
+  <span class="k">if</span> (lines.length === 0) <span class="k">return</span> <span class="k">undefined</span>;   <span class="c">// sin desglose, nada que cuadrar</span>
+
+  <span class="k">const</span> sum = lines.reduce((acc, line) => acc + line.amount, 0);
+  <span class="k">return</span> Math.abs(sum - value()) > 0.01
+    ? { kind: <span class="s">'linesMismatch'</span>,
+        message: `Las líneas suman ${sum.toFixed(2)}, pero el total es ${value()}` }
+    : <span class="k">undefined</span>;
+});</pre>
+
+<div class="callout">
+  <p><span class="lbl">La tolerancia de 0.01 no es arbitraria.</span> Comparar sumas de decimales
+  con <code>===</code> falla por cómo se representan los números en coma flotante: tres líneas de
+  <code>0.1</code> no suman exactamente <code>0.3</code>. Sin ese margen, el formulario rechazaría
+  gastos correctos y el usuario no tendría forma de entender por qué. Hay una prueba dedicada
+  exclusivamente a ese caso.</p>
+</div>
+
+<h3>3.3 Validación asíncrona contra la base de datos</h3>
+
+<p>Dos categorías no pueden llamarse igual. Comprobarlo exige preguntar a Firestore, así que la
+validación es asíncrona: consulta por dueño y nombre, pidiendo un solo documento —basta saber si
+existe alguno, no cuántos hay.</p>
+
+<pre><span class="k">const</span> duplicateQuery = <span class="k">this</span>.sdk.query(
+  <span class="k">this</span>.categoriesCollection,
+  <span class="k">this</span>.sdk.where(<span class="s">'ownerId'</span>, <span class="s">'=='</span>, user.uid),
+  <span class="k">this</span>.sdk.where(<span class="s">'name'</span>, <span class="s">'=='</span>, trimmedName),
+  <span class="k">this</span>.sdk.limit(1),                       <span class="c">// existe o no; el número da igual</span>
+);
+<span class="k">return</span> !(<span class="k">await</span> <span class="k">this</span>.sdk.getDocs(duplicateQuery)).empty;</pre>
+
+<p>Nótese que las funciones del SDK llegan por <code>this.sdk</code> y no por un import. El
+porqué es toda la sección 5.</p>
+
+<!-- ========================= 4 ========================= -->
+<h2>4. Modelo de datos y reglas de seguridad</h2>
+
+<p>Tres colecciones planas, cada documento con el identificador de su dueño. A diferencia de un
+modelo anidado por usuario, aquí la propiedad es un <em>campo</em>, no la ruta — lo que obliga a
+que las reglas lo comprueben en cada operación y, sobre todo, a impedir que ese campo cambie.</p>
+
+<figure>
+<svg viewBox="0 0 780 350" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <defs>
+    <marker id="c1" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+      <path d="M0,0 L8,3.2 L0,6.4 Z" fill="#2e8b6a"/>
+    </marker>
+  </defs>
+
+  <!-- usuario -->
+  <rect x="300" y="10" width="180" height="46" rx="6" fill="#1d4d3e"/>
+  <text x="390" y="31" text-anchor="middle" font-size="12.5" fill="#fff" font-weight="600">Usuario autenticado</text>
+  <text x="390" y="47" text-anchor="middle" font-size="9" fill="#a9d6c4">request.auth.uid</text>
+
+  <!-- tres colecciones -->
+  <g>
+    <rect x="14" y="104" width="232" height="132" rx="6" fill="#fff" stroke="#2e8b6a" stroke-width="1.5"/>
+    <rect x="14" y="104" width="232" height="26" rx="6" fill="#2e8b6a"/>
+    <text x="130" y="122" text-anchor="middle" font-size="11.5" fill="#fff" font-weight="600">expenses</text>
+    <text x="28" y="146" font-size="9.2" fill="#15503d" font-weight="600">ownerId</text><text x="86" y="146" font-size="9.2" fill="#5b6b80">uid del dueño · inmutable</text>
+    <text x="28" y="162" font-size="9.2" fill="#16202e">description</text><text x="110" y="162" font-size="9.2" fill="#8a94a6">1–200 caracteres</text>
+    <text x="28" y="178" font-size="9.2" fill="#16202e">total</text><text x="110" y="178" font-size="9.2" fill="#8a94a6">número &gt; 0</text>
+    <text x="28" y="194" font-size="9.2" fill="#16202e">categoryId</text><text x="110" y="194" font-size="9.2" fill="#8a94a6">→ categories</text>
+    <text x="28" y="210" font-size="9.2" fill="#16202e">lines[]</text><text x="110" y="210" font-size="9.2" fill="#8a94a6">máximo 50</text>
+    <text x="28" y="226" font-size="9.2" fill="#16202e">date · createdAt</text>
+  </g>
+
+  <g>
+    <rect x="274" y="104" width="232" height="98" rx="6" fill="#fff" stroke="#2e8b6a" stroke-width="1.5"/>
+    <rect x="274" y="104" width="232" height="26" rx="6" fill="#2e8b6a"/>
+    <text x="390" y="122" text-anchor="middle" font-size="11.5" fill="#fff" font-weight="600">categories</text>
+    <text x="288" y="146" font-size="9.2" fill="#15503d" font-weight="600">ownerId</text><text x="346" y="146" font-size="9.2" fill="#5b6b80">uid del dueño · inmutable</text>
+    <text x="288" y="162" font-size="9.2" fill="#16202e">name</text><text x="370" y="162" font-size="9.2" fill="#8a94a6">1–50 · único por dueño</text>
+    <text x="288" y="178" font-size="9.2" fill="#16202e">color</text>
+    <text x="288" y="194" font-size="8.6" fill="#a08a3a">unicidad validada en cliente</text>
+  </g>
+
+  <g>
+    <rect x="534" y="104" width="232" height="98" rx="6" fill="#fff" stroke="#2e8b6a" stroke-width="1.5"/>
+    <rect x="534" y="104" width="232" height="26" rx="6" fill="#2e8b6a"/>
+    <text x="650" y="122" text-anchor="middle" font-size="11.5" fill="#fff" font-weight="600">budgets</text>
+    <text x="548" y="146" font-size="9.2" fill="#15503d" font-weight="600">ownerId</text><text x="606" y="146" font-size="9.2" fill="#5b6b80">uid del dueño · inmutable</text>
+    <text x="548" y="162" font-size="9.2" fill="#16202e">categoryId</text><text x="630" y="162" font-size="9.2" fill="#8a94a6">→ categories</text>
+    <text x="548" y="178" font-size="9.2" fill="#16202e">month</text><text x="630" y="178" font-size="9.2" fill="#8a94a6">formato AAAA-MM</text>
+    <text x="548" y="194" font-size="9.2" fill="#16202e">limit</text><text x="630" y="194" font-size="9.2" fill="#8a94a6">número &gt; 0</text>
+  </g>
+
+  <path d="M330,58 L150,100" stroke="#2e8b6a" stroke-width="1.6" fill="none" marker-end="url(#c1)"/>
+  <path d="M390,58 L390,100" stroke="#2e8b6a" stroke-width="1.6" fill="none" marker-end="url(#c1)"/>
+  <path d="M450,58 L630,100" stroke="#2e8b6a" stroke-width="1.6" fill="none" marker-end="url(#c1)"/>
+  <text x="196" y="86" font-size="8.8" fill="#2e8b6a">ownerId == uid</text>
+  <text x="640" y="86" font-size="8.8" fill="#2e8b6a">ownerId == uid</text>
+
+  <!-- nota reglas -->
+  <rect x="14" y="258" width="752" height="78" rx="5" fill="#f1f8f4" stroke="#bcd9cc"/>
+  <text x="30" y="279" font-size="10" fill="#1d4d3e" font-weight="600">Las cuatro operaciones se comprueban por separado</text>
+  <text x="30" y="297" font-size="9.3" fill="#3f5a50">leer y borrar: el documento almacenado debe pertenecer a quien lo pide.</text>
+  <text x="30" y="312" font-size="9.3" fill="#3f5a50">crear: el ownerId entrante debe ser el del usuario — nadie crea documentos a nombre de otro.</text>
+  <text x="30" y="327" font-size="9.3" fill="#3f5a50">actualizar: además, el ownerId no puede cambiar; un documento no se regala ni se roba.</text>
+</svg>
+<figcaption><strong>Figura 1</strong> — Modelo de datos. La propiedad es un campo validado en cada
+operación, no una ruta.</figcaption>
+</figure>
+
+<pre><span class="k">function</span> isOwner(data) {
+  <span class="k">return</span> isSignedIn() && data.ownerId == request.auth.uid;
+}
+
+<span class="k">match</span> /expenses/{expenseId} {
+  <span class="k">allow</span> read:   <span class="k">if</span> isOwner(resource.data);
+  <span class="k">allow</span> create: <span class="k">if</span> isSignedIn() &&
+                   request.resource.data.ownerId == request.auth.uid &&
+                   isValidExpense(request.resource.data);
+  <span class="k">allow</span> update: <span class="k">if</span> isOwner(resource.data) &&
+                   isValidExpense(request.resource.data) &&
+                   ownerUnchanged();            <span class="c">// el dueño no cambia jamás</span>
+  <span class="k">allow</span> delete: <span class="k">if</span> isOwner(resource.data);
+}</pre>
+
+<p>Cada validador usa <code>hasOnly</code> sobre la lista de campos permitidos: un documento con
+un campo de más se rechaza. Esto cierra la puerta a que un cliente modificado engorde los
+documentos con datos que la aplicación nunca lee pero que ocupan cuota.</p>
+
+<!-- ========================= 5 ========================= -->
+<h2>5. El fallo que cambió la arquitectura de la aplicación</h2>
+
+<p>El primer <em>pull request</em> con integración continua reveló algo que ninguna ejecución
+local había mostrado: <strong>66 pruebas en verde en Windows y 23 en rojo en Linux</strong>, sobre
+exactamente el mismo código.</p>
+
+<p>Las 23 que caían eran precisamente las que sustituían el SDK de Firebase con dobles de módulo.
+El síntoma era siempre idéntico: la lista de llamadas registradas aparecía vacía y el valor
+preparado con <code>mockResolvedValue()</code> no surtía efecto, como si el doble no existiera.</p>
+
+<h3>5.1 La causa</h3>
+
+<p>El compilador de Angular empaqueta todos los archivos de prueba juntos y reparte los módulos
+compartidos en bloques según su propio criterio, que no es idéntico en las dos plataformas. En
+Linux, el bloque que recibió el doble no era el mismo que el servicio estaba usando:
+<strong>la prueba vigilaba una copia del doble mientras el servicio llamaba a otra.</strong></p>
+
+<figure>
+<svg viewBox="0 0 780 300" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <defs>
+    <marker id="d1" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+      <path d="M0,0 L8,3.2 L0,6.4 Z" fill="#c0392b"/>
+    </marker>
+    <marker id="d2" markerWidth="9" markerHeight="9" refX="8" refY="3.2" orient="auto">
+      <path d="M0,0 L8,3.2 L0,6.4 Z" fill="#2e8b6a"/>
+    </marker>
+  </defs>
+
+  <!-- ANTES -->
+  <text x="14" y="22" font-size="10.5" fill="#a5342a" font-weight="700">ANTES · import + doble de módulo</text>
+  <rect x="14" y="34" width="150" height="44" rx="5" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="89" y="52" text-anchor="middle" font-size="10.5" fill="#a5342a" font-weight="600">el spec</text>
+  <text x="89" y="68" text-anchor="middle" font-size="8.6" fill="#b5564c">vi.mock(...)</text>
+
+  <rect x="240" y="20" width="160" height="34" rx="5" fill="#fff" stroke="#c0392b" stroke-dasharray="4 3"/>
+  <text x="320" y="41" text-anchor="middle" font-size="9.6" fill="#a5342a">copia A del módulo</text>
+
+  <rect x="240" y="72" width="160" height="34" rx="5" fill="#fff" stroke="#c0392b" stroke-dasharray="4 3"/>
+  <text x="320" y="93" text-anchor="middle" font-size="9.6" fill="#a5342a">copia B del módulo</text>
+
+  <rect x="470" y="48" width="150" height="44" rx="5" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="545" y="66" text-anchor="middle" font-size="10.5" fill="#a5342a" font-weight="600">el servicio</text>
+  <text x="545" y="82" text-anchor="middle" font-size="8.6" fill="#b5564c">import directo</text>
+
+  <path d="M164,50 L236,38" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+  <path d="M470,74 L404,90" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#d1)"/>
+  <text x="636" y="62" font-size="9" fill="#a5342a">mock.calls</text>
+  <text x="636" y="76" font-size="9" fill="#a5342a">siempre vacío</text>
+
+  <line x1="14" y1="130" x2="766" y2="130" stroke="#d7dee8"/>
+
+  <!-- DESPUES -->
+  <text x="14" y="160" font-size="10.5" fill="#1d4d3e" font-weight="700">DESPUÉS · inyección por token</text>
+
+  <rect x="14" y="174" width="150" height="44" rx="5" fill="#f1f8f4" stroke="#2e8b6a" stroke-width="1.2"/>
+  <text x="89" y="192" text-anchor="middle" font-size="10.5" fill="#1d4d3e" font-weight="600">el spec</text>
+  <text x="89" y="208" text-anchor="middle" font-size="8.6" fill="#3f7a64">provide(AUTH_SDK, doble)</text>
+
+  <rect x="290" y="174" width="180" height="44" rx="5" fill="#1d4d3e"/>
+  <text x="380" y="192" text-anchor="middle" font-size="10.5" fill="#fff" font-weight="600">inyector de Angular</text>
+  <text x="380" y="208" text-anchor="middle" font-size="8.6" fill="#a9d6c4">un solo valor, sin ambigüedad</text>
+
+  <rect x="596" y="174" width="170" height="44" rx="5" fill="#f1f8f4" stroke="#2e8b6a" stroke-width="1.2"/>
+  <text x="681" y="192" text-anchor="middle" font-size="10.5" fill="#1d4d3e" font-weight="600">el servicio</text>
+  <text x="681" y="208" text-anchor="middle" font-size="8.6" fill="#3f7a64">inject(AUTH_SDK)</text>
+
+  <path d="M164,196 L286,196" stroke="#2e8b6a" stroke-width="1.6" fill="none" marker-end="url(#d2)"/>
+  <path d="M470,196 L592,196" stroke="#2e8b6a" stroke-width="1.6" fill="none" marker-end="url(#d2)"/>
+
+  <rect x="14" y="240" width="752" height="46" rx="5" fill="#f1f8f4" stroke="#bcd9cc"/>
+  <text x="30" y="261" font-size="10" fill="#1d4d3e" font-weight="600">La regla que salió de aquí: lo que hay que sustituir en una prueba se inyecta, no se importa.</text>
+  <text x="30" y="277" font-size="9.3" fill="#3f5a50">Un módulo importado puede existir por duplicado; un token resuelve siempre al mismo valor.</text>
+</svg>
+<figcaption><strong>Figura 2</strong> — El mismo código antes y después del cambio.</figcaption>
+</figure>
+
+<h3>5.2 Lo grave no era el CI en rojo</h3>
+
+<div class="callout">
+  <p><span class="lbl">Esas 23 pruebas tampoco verificaban nada en local.</span> Pasaban por cómo
+  cayó el reparto de bloques en Windows, no porque el código fuera correcto. Un fallo real en
+  cualquiera de esos servicios habría pasado inadvertido con la suite entera en verde. El CI no
+  introdujo el problema: lo hizo visible al ejecutar lo mismo en otra plataforma.</p>
+</div>
+
+<p>La solución fue dejar de importar lo que las pruebas necesitan sustituir. Las funciones del
+SDK pasan a viajar en dos tokens de inyección, y el tipo de cada campo se toma de la función real
+con <code>typeof</code>: si el SDK cambia una firma, el proyecto deja de compilar en lugar de
+mentir en silencio.</p>
+
+<pre><span class="k">export interface</span> FirestoreSdk {
+  addDoc:     <span class="k">typeof</span> addDoc;
+  collection: <span class="k">typeof</span> collection;
+  getDocs:    <span class="k">typeof</span> getDocs;
+  onSnapshot: <span class="k">typeof</span> onSnapshot;
+  where:      <span class="k">typeof</span> where;
+  <span class="c">// ...solo los trozos que la aplicación llama de verdad</span>
+}
+
+<span class="k">export const</span> FIRESTORE_SDK = <span class="k">new</span> InjectionToken&lt;FirestoreSdk&gt;(<span class="s">'FIRESTORE_SDK'</span>);</pre>
+
+<p>Un único archivo, <code>app.config.ts</code>, importa los valores reales del SDK y los
+entrega. El resto de la aplicación solo conoce los tokens.</p>
+
+<!-- ========================= 6 ========================= -->
+<h2>6. Pruebas automatizadas</h2>
+
+<p>Las 66 pruebas corren con <strong>Vitest</strong>, el runner que Angular 21 trae por defecto, y
+ninguna abre una conexión: los tokens reciben dobles, así que la suite termina en segundos y no
+necesita credenciales. Cinco archivos concentran el grueso de la verificación; el resto comprueba
+que cada componente se construye sin romperse.</p>
+
+<table>
+  <tr><th>Archivo</th><th>Qué valida</th><th class="num">N.º</th></tr>
+  <tr><td><code>auth.spec.ts</code></td><td>Registro, entrada, salida y la traducción al español de cada error de Firebase</td><td class="num">15</td></tr>
+  <tr><td><code>expense-form.spec.ts</code></td><td>Signal Forms: líneas dinámicas, validación cruzada contra el total y la tolerancia de 0.01</td><td class="num">12</td></tr>
+  <tr><td><code>budget-list.spec.ts</code></td><td>Presupuesto duplicado (categoría + mes) y cruce de cada presupuesto con lo realmente gastado</td><td class="num">11</td></tr>
+  <tr><td><code>category.spec.ts</code></td><td><code>nameExists()</code> y el alta de categorías</td><td class="num">8</td></tr>
+  <tr><td><code>auth-guard</code> · <code>guest-guard</code></td><td>Con sesión, sin sesión y con la sesión aún sin restaurar</td><td class="num">8</td></tr>
+  <tr><td>Otros 12 archivos</td><td>Construcción de cada componente, resolver y guard de cambios sin guardar</td><td class="num">12</td></tr>
+  <tfoot><tr><td colspan="2">Total — 18 archivos</td><td class="num">66</td></tr></tfoot>
+</table>
+
+<pre><span class="c">$ npm test -- --watch=false</span>
+
+ RUN  v4.1.10  expense-tracker
+
+ Test Files  <span class="s">18 passed (18)</span>
+      Tests  <span class="s">66 passed (66)</span>
+   Duration  16.65s</pre>
+<figcaption style="text-align:left;margin:-2mm 0 5mm">
+<strong>Figura 3</strong> — Salida real de la suite (Vitest 4.1.10).</figcaption>
+
+<p>La prueba más valiosa del conjunto es la del guard con la sesión todavía sin restaurar.
+Firebase resuelve el estado de la sesión de forma asíncrona, y un guard que decide antes de
+recibir la respuesta expulsa al login a usuarios válidos cada vez que recargan. En desarrollo
+ese parpadeo es casi invisible; la prueba lo fija.</p>
+
+<!-- ========================= 7 ========================= -->
+<h2>7. Integración continua y despliegue</h2>
+
+<p>Un solo trabajo: formato, las 66 pruebas y un build de producción, en cada <em>push</em> y en
+cada <em>pull request</em>. Como nada toca la red, no hay credenciales que administrar ni riesgo
+de que dos ejecuciones simultáneas se estorben.</p>
+
+<p>Este pipeline <strong>no despliega</strong>, y es una diferencia deliberada respecto de
+<em>reading-shelf</em>, donde el despliegue cuelga de las pruebas end-to-end. Allí existen
+pruebas contra el Firebase real que justifican montar esa puerta; aquí el coste de mantener un
+token de despliegue no se compensa. Dejarlo escrito en el propio workflow evita que la diferencia
+parezca un olvido.</p>
+
+<p>El despliegue lo realiza la integración de Vercel. La configuración vive en
+<code>vercel.json</code> para que quede versionada y pueda explicarse en un commit, en lugar de
+residir en un formulario web. Al ser una SPA, incluye una reescritura que envía cualquier ruta no
+encontrada a <code>index.html</code>: sin ella, recargar en <code>/budgets</code> daría 404,
+porque ese archivo no existe en el disco — la ruta solo existe dentro del router de Angular.</p>
+
+<!-- ========================= 8 ========================= -->
+<h2>8. Limitaciones conocidas</h2>
+
+<ul>
+  <li><code>nameExists()</code> distingue mayúsculas: <em>comida</em> y <em>Comida</em> conviven
+      como categorías distintas. Corregirlo exige un campo <code>nameLower</code>, que obliga a
+      tocar el <code>hasOnly</code> de las reglas y volver a publicarlas.</li>
+  <li>La unicidad de categoría + mes en los presupuestos se valida en el cliente y no puede
+      trasladarse a las reglas: no existe forma de expresar «que no exista ningún otro igual»
+      sobre una colección sin leerla entera.</li>
+  <li>El detalle de cada línea de gasto se valida en forma superficial en las reglas; el contenido
+      concreto se confía al cliente, que valida antes de escribir.</li>
+  <li>El historial del repositorio agrupa demasiado trabajo por commit. No hay nada que corregir
+      hacia atrás, pero es una práctica que conviene cambiar en adelante.</li>
+</ul>
+
+<!-- ========================= 9 ========================= -->
+<h2>9. Conclusiones</h2>
+
+<p>Signal Forms resolvió con naturalidad lo que en formularios tradicionales resulta incómodo: un
+array de campos que cambia de tamaño y una regla que depende de dos partes distintas del modelo.
+Declarar las validaciones sobre la forma del modelo, en lugar de construirlas campo por campo,
+hace que el formulario se lea como el enunciado del problema.</p>
+
+<p>El modelo de datos demostró que colocar la propiedad en un campo, y no en la ruta del
+documento, traslada trabajo a las reglas: hay que validar el dueño en las cuatro operaciones y,
+además, impedir que cambie. Es una decisión legítima, pero no gratuita.</p>
+
+<p>La lección de mayor alcance vino del fallo de la sección 5. Un conjunto de pruebas puede estar
+entero en verde y no verificar nada, y la única razón por la que esto salió a la luz fue ejecutar
+la misma suite en otra plataforma. De ahí sale una regla que ya se aplica desde el primer día en
+los proyectos siguientes: <strong>lo que hay que sustituir en una prueba se inyecta, no se
+importa.</strong></p>
+
+<!-- ========================= 10 ========================= -->
+<h2>10. Método de trabajo</h2>
+
+<p>El proyecto se construyó con asistencia de herramientas de IA, y el repositorio lo declara:
+<code>CLAUDE.md</code>, versionado junto al código, recoge las convenciones e instrucciones con
+las que se trabajó.</p>
+
+<p>El episodio de la sección 5 muestra dónde está el límite de esa asistencia. Las 66 pruebas
+estaban en verde y el código parecía sano; nada en él pedía revisión. Lo que destapó el problema
+fue ejecutar la misma suite en otra plataforma, leer con atención un fallo incómodo en lugar de
+reintentarlo, y llegar hasta la causa —el reparto de módulos en bloques— en vez de quedarse en el
+síntoma. La consecuencia fue rehacer cómo toda la aplicación recibe sus dependencias.</p>
+
+<p>Una herramienta no decide que algo que funciona está mal. Esa es la parte que no se
+delega.</p>

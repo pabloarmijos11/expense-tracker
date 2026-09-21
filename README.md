@@ -6,6 +6,9 @@ mensuales por categoría para ver cuánto le queda del mes.
 
 **Demo: https://expense-tracker-pablo.vercel.app**
 
+**Informe técnico:** [Signal Forms, reglas de seguridad y el fallo que cambió las
+pruebas](docs/informe-tecnico.pdf) (PDF, septiembre 2026)
+
 Hecho con Angular 21 y Firebase (Authentication + Firestore). Hace falta crear
 una cuenta para entrar: todos los datos están cerrados por usuario dueño.
 
