@@ -63,7 +63,7 @@ No es una regla global de Pablo: se decide por proyecto.
 
 ## Reglas de este proyecto
 
-Cinco cosas que rompen algo si se ignoran. Cada una costó encontrarla.
+Seis cosas que rompen algo si se ignoran. Cada una costó encontrarla.
 
 1. **Firebase entra entero por `InjectionToken`, nunca con `@angular/fire` ni con
    un import directo del SDK.** Son cuatro tokens en `core/tokens/firebase.ts`:
@@ -109,6 +109,52 @@ Cinco cosas que rompen algo si se ignoran. Cada una costó encontrarla.
 5. **Comparar importes con tolerancia de `0.01`, nunca con `===`.**
    `0.1 + 0.2` da `0.30000000000000004`. La condición correcta es
    `Math.abs(sum - value()) > 0.01`.
+
+6. **Una fila `flex` con un `<input>` dentro necesita `min-w-0`, y un `flex` que
+   deba partirse necesita `flex-wrap` explícito.** Las dos mitades de la misma
+   trampa, encontrada el 2026-10-05: la app funcionaba pero tenía scroll
+   horizontal en todas las rutas vista desde un móvil.
+
+   Un flex item nace con `min-width: auto`, que significa "no me encojas por
+   debajo de mi `min-content`". Y un `<input type="text">` trae un ancho
+   intrínseco de ~175 px, heredado del atributo `size` (20 caracteres por
+   defecto): **`w-full` no lo baja de ahí**. Por eso la fila de líneas del gasto
+   (etiqueta + `w-28` + "Quitar") medía ~358 px dentro de los 312 px de un
+   viewport de 360. El arreglo es `min-w-0` en el item flexible, acompañado de
+   `break-words` cuando el contenido es texto del usuario, y `shrink-0` en lo que
+   no deba ceder (iconos, importes, botones de acción).
+
+   La otra mitad: **un `flex` sin `flex-wrap` nunca se parte en varias líneas.**
+   Comprime a sus hijos hasta su `min-content` y después desborda el contenedor,
+   sin degradación elegante. El navbar era esto exactamente: cinco elementos en
+   una línea, y el email —texto largo sin puntos de corte— empujaba 36 px fuera
+   del viewport. Como el navbar vive en `layout.html`, ese desborde aparecía en
+   *todas* las rutas. Hoy es `flex flex-wrap` con el logo en `mr-auto`, los
+   enlaces en `order-last w-full sm:order-none sm:w-auto` y el email en
+   `hidden max-w-56 truncate sm:inline`.
+
+   Dos consecuencias más de esa misma sesión:
+
+   - **Nada de restar alturas a mano.** `min-h-[calc(100vh-56px)]` en login y
+     register asumía un navbar de 56 px, cifra que dejaba de ser cierta en cuanto
+     el navbar pasaba a dos filas (mide 80 px en móvil). Lo correcto es un layout
+     flex: raíz `flex min-h-dvh flex-col`, `<main class="flex flex-1 flex-col">`,
+     y las vistas que centran verticalmente piden el espacio con
+     `host: { class: 'flex flex-1 flex-col' }` en su `@Component` — no con
+     `@HostBinding`, que este proyecto prohíbe.
+   - **`min-h-dvh`, no `min-h-screen`.** `100vh` incluye la barra de direcciones
+     del navegador móvil, así que la página siempre queda más alta que la
+     pantalla real. `dvh` mide el viewport visible.
+
+   El breakpoint de este proyecto es `sm:` (640 px): móvil es el caso por
+   defecto y `sm:` restaura la disposición de escritorio. Padding `p-4 sm:p-6`.
+
+   **Ningún test cubre esto**: los 66 specs no miden layout y seguían verdes con
+   el scroll horizontal puesto. La verificación es manual, y la forma fiable de
+   hacerla es un iframe de ancho fijo (`resize_window` no reduce una ventana
+   maximizada): cargar la ruta dentro y comprobar que
+   `scrollWidth === clientWidth`. Medido así a 390, 360 y 320 px en las siete
+   vistas.
 
 ## Patrón de los servicios de datos
 

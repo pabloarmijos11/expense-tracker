@@ -1,11 +1,14 @@
-<nav class="flex items-center justify-between bg-white px-6 py-3 shadow">
-  <a routerLink="/expenses" class="text-lg font-bold text-blue-600">Gestor de gastos</a>
+<nav class="flex flex-wrap items-center gap-x-4 gap-y-2 bg-white px-4 py-3 shadow sm:px-6">
+  <a routerLink="/expenses" class="mr-auto text-lg font-bold text-blue-600">Gestor de gastos</a>
 
   @if (authService.currentUser(); as user) {
-    <div class="flex items-center gap-4">
+    <div class="order-last flex w-full items-center gap-4 sm:order-none sm:w-auto">
       <a routerLink="/categories" class="text-sm text-blue-600 underline">Categorías</a>
       <a routerLink="/budgets" class="text-sm text-blue-600 underline">Presupuestos</a>
-      <span class="text-sm text-gray-600">{{ user.email }}</span>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span class="hidden max-w-56 truncate text-sm text-gray-600 sm:inline">{{ user.email }}</span>
       <button
         type="button"
         (click)="onLogout()"

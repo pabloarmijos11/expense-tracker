@@ -8,6 +8,7 @@ import { AuthService } from '../auth';
   imports: [FormField, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
+  host: { class: 'flex flex-1 flex-col' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Login {
